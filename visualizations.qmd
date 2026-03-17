@@ -1,7 +1,6 @@
 ---
 title: "Análisis Visual del Mercado Laboral Ecuatoriano"
 subtitle: "Determinantes de la Estabilidad Laboral — ENEMDU Enero 2026"
-author: "Análisis de Mercado Laboral"
 execute:
   warning: false
   message: false
