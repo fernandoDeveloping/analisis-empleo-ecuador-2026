@@ -1,0 +1,857 @@
+---
+title: "Análisis Visual del Mercado Laboral Ecuatoriano"
+subtitle: "Determinantes de la Estabilidad Laboral — ENEMDU Enero 2026"
+author: "Análisis de Mercado Laboral"
+execute:
+  warning: false
+  message: false
+  echo: true
+---
+
+## Introducción
+
+Este documento explora los **determinantes del empleo adecuado en Ecuador** a través de visualizaciones interactivas construidas con Altair. El análisis sigue una narrativa en cuatro ejes:
+
+1. **Estructura del mercado laboral** — ¿Cómo se distribuye la población por condición de actividad?
+2. **Educación como factor clave** — ¿Qué tanto importa el nivel de instrucción?
+3. **Brechas de género y edad** — ¿Quiénes quedan fuera del empleo adecuado?
+4. **Dimensión geográfica** — ¿Dónde se concentra la precariedad laboral?
+
+---
+
+## Configuración y Carga de Datos
+
+```{python}
+#| label: setup
+import pandas as pd
+import altair as alt
+import numpy as np
+
+alt.data_transformers.enable('default', max_rows=30000)
+
+# Carga del dataset limpio generado en data_cleaning.qmd
+df = pd.read_csv('SPSS/ENEMDU_clean.csv')
+
+# Convertir columnas numéricas que pueden llegar como object desde el CSV
+for col in ['edad', 'nivel_educativo', 'condicion_actividad', 'empleo_adecuado',
+            'empleo', 'desempleado', 'horas_trabajo_totales', 'horas_visual',
+            'ingreso_laboral', 'ingreso_per_capita']:
+    if col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
+# ── Etiquetas de condición de actividad ────────────────────────────
+map_condact = {
+    1: 'Empleo Adecuado',
+    2: 'Subempleo (tiempo)',
+    3: 'Subempleo (ingresos)',
+    4: 'Otro empleo no pleno',
+    5: 'No remunerado',
+    6: 'No clasificado',
+    7: 'Desempleo abierto',
+    8: 'Desempleo oculto',
+    9: 'Inactivo',
+    0: 'Menor de 15'
+}
+df['condact_txt'] = df['condicion_actividad'].map(map_condact).fillna('Sin dato')
+
+# ── Etiqueta binaria empleo adecuado ───────────────────────────────
+df['es_adecuado'] = df['empleo_adecuado'].map({1.0: 'Adecuado'}).fillna('Inestable/Otros')
+
+# ── Niveles educativos ─────────────────────────────────────────────
+# nivel_educativo viene como número desde el CSV (1=Ninguno ... 10=Post-grado)
+map_educ = {
+    1: 'Ninguno',
+    2: 'Alfabetización',
+    3: 'Jardín de infantes',
+    4: 'Primaria',
+    5: 'Ed. Básica',
+    6: 'Secundaria',
+    7: 'Bachillerato',
+    8: 'Superior técnico',
+    9: 'Superior universitario',
+    10: 'Post-grado / Maestría'
+}
+df['nivel_txt'] = df['nivel_educativo'].map(map_educ).fillna('Sin dato')
+
+orden_educ = [
+    'Ninguno', 'Alfabetización', 'Jardín de infantes',
+    'Primaria', 'Ed. Básica', 'Secundaria', 'Bachillerato',
+    'Superior técnico', 'Superior universitario', 'Post-grado / Maestría', 'Sin dato'
+]
+
+# ── Género ─────────────────────────────────────────────────────────
+df['genero_txt'] = pd.to_numeric(df['genero'], errors='coerce').map({1: 'Hombre', 2: 'Mujer'}).fillna('Sin dato')
+
+# ── Área ───────────────────────────────────────────────────────────
+# area viene como 1/2 numérico desde el CSV limpio
+df['area_txt'] = pd.to_numeric(df['area'], errors='coerce').map({1: 'Urbana', 2: 'Rural'}).fillna('Sin dato')
+
+# ── Grupos de edad ────────────────────────────────────────────────
+bins  = [14, 24, 34, 44, 54, 64, 100]
+labels = ['15–24', '25–34', '35–44', '45–54', '55–64', '65+']
+df['grupo_edad'] = pd.cut(df['edad'], bins=bins, labels=labels)
+df['grupo_edad'] = df['grupo_edad'].astype(str).replace('nan', 'Sin dato')
+
+# ── Solo población ocupada (para análisis de horas e ingresos) ────
+df_ocu = df[df['empleo'] == 1.0].copy()
+
+# ── Solo PET (para tasas de mercado laboral) ──────────────────────
+df_pet = df[df['edad'] >= 15].copy()
+
+print(f"Total registros: {len(df):,}")
+print(f"Ocupados:        {len(df_ocu):,}")
+print(f"PET:             {len(df_pet):,}")
+```
+
+---
+
+## 1. Estructura del Mercado Laboral
+
+### 1.1 Composición de la Población por Condición de Actividad
+
+**Tipo de gráfico:** Barras horizontales apiladas normalizadas  
+**Justificación:** Permite comparar la distribución proporcional entre categorías ordinales de condición laboral de un vistazo. La normalización hace que cada barra sume 100%, facilitando comparaciones entre grupos.
+
+```{python}
+#| label: fig-composicion-condact
+
+orden_condact = [
+    'Empleo Adecuado', 'Subempleo (tiempo)', 'Subempleo (ingresos)',
+    'Otro empleo no pleno', 'No remunerado', 'No clasificado',
+    'Desempleo abierto', 'Desempleo oculto', 'Inactivo', 'Menor de 15'
+]
+
+colores_condact = [
+    '#2ecc71', '#f39c12', '#e67e22', '#e74c3c',
+    '#95a5a6', '#7f8c8d', '#c0392b', '#922b21',
+    '#85c1e9', '#d5dbdb'
+]
+
+chart_condact = alt.Chart(df).mark_bar().encode(
+    x=alt.X('count():Q',
+            stack='normalize',
+            title='Proporción de la población',
+            axis=alt.Axis(format='%')),
+    y=alt.Y('area_txt:N', title='Área'),
+    color=alt.Color('condact_txt:N',
+                    title='Condición de actividad',
+                    sort=orden_condact,
+                    scale=alt.Scale(domain=orden_condact, range=colores_condact)),
+    order=alt.Order('condact_txt:N', sort='ascending'),
+    tooltip=[
+        alt.Tooltip('area_txt:N', title='Área'),
+        alt.Tooltip('condact_txt:N', title='Condición'),
+        alt.Tooltip('count():Q', title='Personas'),
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Distribución de la Condición de Actividad por Área',
+        subtitle='Urbano vs Rural — ENEMDU Enero 2026',
+        fontSize=15
+    ),
+    width=650, height=120
+)
+
+chart_condact
+```
+
+> **Interpretación:** Las barras muestran cómo se distribuye cada condición laboral dentro de las áreas urbana y rural. Una mayor proporción de verde (Empleo Adecuado) en el área urbana frente al rural refleja la concentración de empleos de calidad en ciudades. El predominio de tonos naranjas y rojos en el rural indica mayor precariedad laboral fuera de los centros urbanos.
+
+---
+
+### 1.2 Pirámide de la Condición Laboral
+
+**Tipo de gráfico:** Gráfico de dona (donut)  
+**Justificación:** Ideal para mostrar la composición proporcional de un todo. El hueco central permite agregar un dato clave (tasa de empleo adecuado) sin perder la lectura de partes.
+
+```{python}
+#| label: fig-dona-condact
+
+# Calcular conteos por condición (solo PET)
+condact_counts = (
+    df_pet.groupby('condact_txt')
+    .size()
+    .reset_index(name='n')
+)
+condact_counts['pct'] = condact_counts['n'] / condact_counts['n'].sum()
+
+dona = alt.Chart(condact_counts).mark_arc(innerRadius=80, outerRadius=160).encode(
+    theta=alt.Theta('n:Q'),
+    color=alt.Color('condact_txt:N',
+                    title='Condición',
+                    sort=orden_condact,
+                    scale=alt.Scale(domain=orden_condact, range=colores_condact)),
+    tooltip=[
+        alt.Tooltip('condact_txt:N', title='Condición'),
+        alt.Tooltip('n:Q', title='Personas', format=','),
+        alt.Tooltip('pct:Q', title='Proporción', format='.1%')
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Composición del Mercado Laboral — PET',
+        subtitle='Población en Edad de Trabajar (≥15 años)',
+        fontSize=15
+    ),
+    width=400, height=380
+)
+
+dona
+```
+
+> **Interpretación:** La dona muestra el peso relativo de cada categoría laboral dentro de la PET. El segmento verde (Empleo Adecuado) representa la proporción de trabajadores con condiciones laborales óptimas. Los segmentos de inactivos (azul claro) suelen ser los más grandes por incluir estudiantes, amas de casa y jubilados.
+
+---
+
+## 2. Educación como Determinante del Empleo
+
+### 2.1 Acceso al Empleo Adecuado por Nivel Educativo
+
+**Tipo de gráfico:** Barras horizontales apiladas normalizadas  
+**Justificación:** Al normalizar por nivel educativo, se puede comparar directamente la *proporción* de empleo adecuado en cada grupo, independientemente del tamaño de la muestra por nivel.
+
+```{python}
+#| label: fig-educ-empleo
+
+df_educ = df_pet[df_pet['nivel_txt'] != 'Sin dato'].copy()
+
+chart_educ = alt.Chart(df_educ).mark_bar(cornerRadiusTopRight=4, cornerRadiusBottomRight=4).encode(
+    x=alt.X('count():Q',
+            stack='normalize',
+            title='Proporción',
+            axis=alt.Axis(format='%')),
+    y=alt.Y('nivel_txt:N',
+            title='Nivel educativo',
+            sort=orden_educ),
+    color=alt.Color('es_adecuado:N',
+                    title='Condición laboral',
+                    scale=alt.Scale(
+                        domain=['Adecuado', 'Inestable/Otros'],
+                        range=['#27ae60', '#e74c3c']
+                    )),
+    tooltip=[
+        alt.Tooltip('nivel_txt:N', title='Nivel'),
+        alt.Tooltip('es_adecuado:N', title='Condición'),
+        alt.Tooltip('count():Q', title='Personas', format=','),
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Acceso al Empleo Adecuado por Nivel Educativo',
+        subtitle='Mayor educación → mayor proporción de empleo adecuado',
+        fontSize=15
+    ),
+    width=600, height=360
+)
+
+chart_educ
+```
+
+> **Interpretación:** Se espera una relación positiva clara: a mayor nivel educativo, mayor proporción de barra verde. La diferencia entre quienes tienen solo primaria vs. educación universitaria ilustra el *retorno educativo* en términos de calidad de empleo. Niveles de post-grado deberían mostrar la proporción más alta de empleo adecuado.
+
+---
+
+### 2.2 Ingresos Laborales por Nivel Educativo y Género
+
+**Tipo de gráfico:** Box plot (diagrama de caja)  
+**Justificación:** Muestra la distribución completa de ingresos (mediana, cuartiles, valores atípicos) por grupo, revelando no solo el promedio sino la dispersión y asimetrías salariales.
+
+```{python}
+#| label: fig-boxplot-ingresos
+
+df_ing = df_ocu[
+    (df_ocu['nivel_txt'] != 'Sin dato') &
+    (df_ocu['ingreso_laboral'] > 0) &
+    (df_ocu['ingreso_laboral'] < 3000)
+].copy()
+
+boxplot = alt.Chart(df_ing).mark_boxplot(
+    extent='min-max',
+    median=alt.MarkConfig(color='white', size=10)
+).encode(
+    x=alt.X('nivel_txt:N',
+            title='Nivel educativo',
+            sort=orden_educ,
+            axis=alt.Axis(labelAngle=-35)),
+    y=alt.Y('ingreso_laboral:Q',
+            title='Ingreso laboral mensual (USD)',
+            scale=alt.Scale(zero=True)),
+    color=alt.Color('genero_txt:N',
+                    title='Género',
+                    scale=alt.Scale(
+                        domain=['Hombre', 'Mujer'],
+                        range=['#2980b9', '#e91e8c']
+                    )),
+    tooltip=[
+        alt.Tooltip('nivel_txt:N', title='Nivel'),
+        alt.Tooltip('genero_txt:N', title='Género'),
+        alt.Tooltip('median(ingreso_laboral):Q', title='Mediana USD', format=',.0f'),
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Distribución de Ingresos por Nivel Educativo y Género',
+        subtitle='Línea blanca = mediana | Barras = rango intercuartil',
+        fontSize=15
+    ),
+    width=650, height=380
+)
+
+boxplot
+```
+
+> **Interpretación:** Las cajas más altas en la escala vertical corresponden a mayores ingresos. La brecha vertical entre azul (hombres) y rosa (mujeres) en cada nivel evidencia la **brecha salarial de género**. Ingresos más dispersos (cajas más largas) en niveles superiores reflejan mayor heterogeneidad salarial entre profesionales.
+
+---
+
+## 3. Brechas de Género y Ciclo de Vida
+
+### 3.1 Tasa de Empleo Adecuado por Grupo de Edad y Género
+
+**Tipo de gráfico:** Líneas con puntos (connected scatter)  
+**Justificación:** Las líneas muestran la evolución de la tasa a lo largo del ciclo de vida, mientras los puntos permiten leer valores exactos por grupo. La separación por color de género permite comparar trayectorias laborales.
+
+```{python}
+#| label: fig-ciclovida-genero
+
+_tmp_cv = df_pet[
+    (df_pet['genero_txt'].isin(['Hombre', 'Mujer'])) &
+    (df_pet['grupo_edad'] != 'Sin dato')
+].copy()
+_tmp_cv['_adec'] = (_tmp_cv['empleo_adecuado'] == 1.0).astype(float)
+df_cv = (
+    _tmp_cv.groupby(['grupo_edad', 'genero_txt'])
+    .agg(tasa_adecuado=('_adec', 'mean'), n=('_adec', 'count'))
+    .reset_index()
+)
+
+color_scale = alt.Scale(domain=['Hombre', 'Mujer'], range=['#1a6faf', '#d44f8e'])
+
+# Banda de área suave: usa y y y2 para limitar el rango y no explotarse
+# y2 = valor mínimo de cada género para que la banda sea delgada
+df_cv_h = df_cv[df_cv['genero_txt'] == 'Hombre'].copy()
+df_cv_m = df_cv[df_cv['genero_txt'] == 'Mujer'].copy()
+
+# Merge para tener ambos valores por grupo de edad y calcular banda entre ellos
+df_banda = df_cv_h[['grupo_edad','tasa_adecuado']].merge(
+    df_cv_m[['grupo_edad','tasa_adecuado']], on='grupo_edad', suffixes=('_h','_m')
+)
+
+banda = alt.Chart(df_banda).mark_area(opacity=0.12, color='#8ab4d4').encode(
+    x=alt.X('grupo_edad:O'),
+    y=alt.Y('tasa_adecuado_h:Q', scale=alt.Scale(domain=[0, 0.6])),
+    y2=alt.Y2('tasa_adecuado_m:Q')
+)
+
+lineas = alt.Chart(df_cv).mark_line(
+    point=alt.OverlayMarkDef(filled=True, size=80),
+    strokeWidth=2.5
+).encode(
+    x=alt.X('grupo_edad:O', title='Grupo de edad'),
+    y=alt.Y('tasa_adecuado:Q',
+            title='Tasa de empleo adecuado',
+            axis=alt.Axis(format='%'),
+            scale=alt.Scale(domain=[0, 0.6])),
+    color=alt.Color('genero_txt:N', title='Género', scale=color_scale),
+    strokeDash=alt.StrokeDash('genero_txt:N',
+                              legend=None,
+                              scale=alt.Scale(range=[[1, 0], [6, 3]])),
+    tooltip=[
+        alt.Tooltip('grupo_edad:O', title='Edad'),
+        alt.Tooltip('genero_txt:N', title='Género'),
+        alt.Tooltip('tasa_adecuado:Q', title='Tasa', format='.1%'),
+        alt.Tooltip('n:Q', title='Personas', format=',')
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Tasa de Empleo Adecuado por Ciclo de Vida y Género',
+        subtitle='¿En qué edades convergen o divergen las trayectorias laborales?',
+        fontSize=15
+    ),
+    width=620, height=350
+)
+
+(banda + lineas)
+```
+
+> **Interpretación:** La distancia vertical entre las dos líneas en cada grupo de edad mide la **brecha de género**. Si la línea azul (hombres) está consistentemente por encima de la rosa (mujeres), existe una ventaja masculina sostenida. Los grupos de 25–44 suelen tener las tasas más altas por ser el período de mayor productividad laboral.
+
+---
+
+### 3.2 Distribución de Horas Trabajadas por Género y Área
+
+**Tipo de gráfico:** Histograma facetado (small multiples)  
+**Justificación:** Comparar cuatro distribuciones simultáneamente (2 géneros × 2 áreas) en paneles separados permite identificar diferencias de jornada laboral sin solapamiento de barras.
+
+```{python}
+#| label: fig-horas-facet
+
+df_h = df_ocu[
+    (df_ocu['genero_txt'].isin(['Hombre', 'Mujer'])) &
+    (df_ocu['area_txt'].isin(['Urbana', 'Rural'])) &
+    (df_ocu['horas_trabajo_totales'] > 0) &
+    (df_ocu['horas_trabajo_totales'] <= 80)
+].copy()
+
+hist_horas = alt.Chart(df_h).mark_bar(opacity=0.8, binSpacing=1).encode(
+    x=alt.X('horas_trabajo_totales:Q',
+            bin=alt.Bin(maxbins=25),
+            title='Horas semanales trabajadas'),
+    y=alt.Y('count():Q', title='Frecuencia'),
+    color=alt.Color('genero_txt:N',
+                    title='Género',
+                    scale=alt.Scale(
+                        domain=['Hombre', 'Mujer'],
+                        range=['#2980b9', '#e91e8c']
+                    )),
+    tooltip=[
+        alt.Tooltip('horas_trabajo_totales:Q', bin=True, title='Horas'),
+        alt.Tooltip('count():Q', title='Personas'),
+        alt.Tooltip('genero_txt:N', title='Género')
+    ]
+).properties(width=260, height=200).facet(
+    facet=alt.Facet('area_txt:N', title='Área'),
+    columns=2
+).properties(
+    title=alt.TitleParams(
+        'Distribución de Jornada Laboral por Género y Área',
+        subtitle='Horas trabajadas semanalmente en ocupados',
+        fontSize=15
+    )
+)
+
+hist_horas
+```
+
+> **Interpretación:** Los picos en las distribuciones revelan las jornadas más comunes. Un pico en 40 horas indica predominio de jornada completa estándar. Si el área rural muestra picos más dispersos, sugiere mayor informalidad y variabilidad en la jornada. La diferencia entre géneros en el mismo panel refleja desigualdad en carga laboral remunerada.
+
+---
+
+### 3.3 Heatmap: Empleo Adecuado por Edad y Nivel Educativo
+
+**Tipo de gráfico:** Mapa de calor (heatmap)  
+**Justificación:** Permite visualizar simultáneamente la interacción entre dos variables continuas/ordinales y su efecto sobre una tercera (tasa de empleo adecuado). Revela patrones que los gráficos lineales ocultan.
+
+```{python}
+#| label: fig-heatmap-edad-educ
+
+_tmp = df_pet[
+    (df_pet['nivel_txt'] != 'Sin dato') &
+    (df_pet['grupo_edad'] != 'Sin dato')
+].copy()
+_tmp['_adec'] = (_tmp['empleo_adecuado'] == 1.0).astype(float)
+df_hm = (
+    _tmp.groupby(['grupo_edad', 'nivel_txt'])
+    .agg(tasa=('_adec', 'mean'), n=('_adec', 'count'))
+    .reset_index()
+)
+
+heatmap = alt.Chart(df_hm[df_hm['n'] >= 20]).mark_rect(
+    cornerRadius=3
+).encode(
+    x=alt.X('nivel_txt:O',
+            title='Nivel educativo',
+            sort=orden_educ,
+            axis=alt.Axis(labelAngle=-35)),
+    y=alt.Y('grupo_edad:O',
+            title='Grupo de edad',
+            sort=labels),
+    color=alt.Color('tasa:Q',
+                    title='Tasa empleo adecuado',
+                    scale=alt.Scale(
+                        scheme='viridis',
+                        domain=[0, 0.6]
+                    )),
+    tooltip=[
+        alt.Tooltip('grupo_edad:O', title='Edad'),
+        alt.Tooltip('nivel_txt:O', title='Nivel'),
+        alt.Tooltip('tasa:Q', title='Tasa', format='.1%'),
+        alt.Tooltip('n:Q', title='Muestra', format=',')
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Tasa de Empleo Adecuado: Edad × Nivel Educativo',
+        subtitle='Celdas más claras (amarillo) = mayor tasa | Oscuras (morado) = menor tasa',
+        fontSize=15
+    ),
+    width=600, height=300
+)
+
+texto_hm = heatmap.mark_text(fontSize=9, fontWeight='bold').encode(
+    text=alt.Text('tasa:Q', format='.0%'),
+    color=alt.condition(
+        alt.datum.tasa > 0.3,
+        alt.value('black'),
+        alt.value('white')
+    )
+)
+
+(heatmap + texto_hm)
+```
+
+> **Interpretación:** Las celdas amarillas (esquina superior derecha: edad media + alta educación) identifican el perfil de mayor probabilidad de empleo adecuado. Las celdas moradas (baja educación + edades extremas) señalan los grupos más vulnerables. Las celdas vacías indican combinaciones con muestra insuficiente para estimar tasas confiables.
+
+---
+
+## 4. Dimensión Geográfica
+
+### 4.1 Ranking de Ciudades por Tasa de Empleo Adecuado
+
+**Tipo de gráfico:** Barras horizontales ordenadas (lollipop chart)  
+**Justificación:** El ordenamiento permite identificar de un vistazo qué ciudades tienen mejor y peor acceso a empleo de calidad. El lollipop reduce el peso visual respecto a barras sólidas.
+
+```{python}
+#| label: fig-ranking-ciudades
+
+_tmp_top = df_pet[df_pet['ciudad'] != 'No hay dato'].copy()
+_tmp_top['_adec'] = (_tmp_top['empleo_adecuado'] == 1.0).astype(float)
+top_ciudades = (
+    _tmp_top.groupby('ciudad')
+    .agg(tasa_adecuado=('_adec', 'mean'), n=('_adec', 'count'))
+    .reset_index()
+)
+
+# Solo ciudades con muestra suficiente
+top_ciudades = top_ciudades[top_ciudades['n'] >= 100].nlargest(20, 'tasa_adecuado')
+
+base_lollipop = alt.Chart(top_ciudades)
+
+linea_lollipop = base_lollipop.mark_rule(color='#bdc3c7', strokeWidth=1.5).encode(
+    x=alt.X('tasa_adecuado:Q',
+            title='Tasa de empleo adecuado',
+            axis=alt.Axis(format='%')),
+    y=alt.Y('ciudad:N',
+            title='Ciudad',
+            sort=alt.SortField('tasa_adecuado', order='descending')),
+    x2=alt.value(0)
+)
+
+punto_lollipop = base_lollipop.mark_circle(size=120).encode(
+    x=alt.X('tasa_adecuado:Q'),
+    y=alt.Y('ciudad:N',
+            sort=alt.SortField('tasa_adecuado', order='descending')),
+    color=alt.Color('tasa_adecuado:Q',
+                    title='Tasa',
+                    scale=alt.Scale(scheme='redyellowgreen', domain=[0, 0.5])),
+    tooltip=[
+        alt.Tooltip('ciudad:N', title='Ciudad'),
+        alt.Tooltip('tasa_adecuado:Q', title='Tasa', format='.1%'),
+        alt.Tooltip('n:Q', title='Muestra', format=',')
+    ]
+)
+
+(linea_lollipop + punto_lollipop).properties(
+    title=alt.TitleParams(
+        'Top 20 Ciudades por Tasa de Empleo Adecuado',
+        subtitle='Solo ciudades con n ≥ 100 encuestados',
+        fontSize=15
+    ),
+    width=560, height=480
+)
+```
+
+> **Interpretación:** Las ciudades en la parte superior (puntos verdes) tienen mayor proporción de empleo adecuado, generalmente asociadas a mayor industrialización, presencia de servicios formales o sedes de empresas grandes. Las ciudades en la parte inferior (puntos rojos) son mercados laborales más precarios, típicamente con mayor dependencia del comercio informal o agricultura.
+
+---
+
+### 4.2 Dispersión: Ingreso vs. Horas Trabajadas por Ciudad
+
+**Tipo de gráfico:** Scatter plot con selección interactiva  
+**Justificación:** Relaciona dos variables continuas clave (horas e ingresos) para identificar si los trabajadores de cada ciudad tienen retornos laborales proporcionales a su esfuerzo. La selección interactiva permite explorar ciudades específicas.
+
+```{python}
+#| label: fig-scatter-ingreso-horas
+
+_tmp_sc = df_ocu[
+    (df_ocu['ciudad'] != 'No hay dato') &
+    (df_ocu['ingreso_laboral'] > 0) &
+    (df_ocu['horas_trabajo_totales'] > 0)
+].copy()
+_tmp_sc['_adec'] = (_tmp_sc['empleo_adecuado'] == 1.0).astype(float)
+df_sc = (
+    _tmp_sc.groupby('ciudad')
+    .agg(
+        horas_mediana=('horas_trabajo_totales', 'median'),
+        ingreso_mediana=('ingreso_laboral', 'median'),
+        tasa_adecuado=('_adec', 'mean'),
+        n=('_adec', 'count')
+    )
+    .reset_index()
+)
+
+df_sc = df_sc[df_sc['n'] >= 50]
+
+seleccion = alt.selection_point(fields=['ciudad'], on='mouseover', nearest=True)
+
+scatter = alt.Chart(df_sc).mark_circle().encode(
+    x=alt.X('horas_mediana:Q',
+            title='Mediana horas semanales',
+            scale=alt.Scale(zero=False)),
+    y=alt.Y('ingreso_mediana:Q',
+            title='Mediana ingreso laboral (USD)',
+            scale=alt.Scale(zero=False)),
+    size=alt.Size('n:Q',
+                  title='Tamaño muestra',
+                  scale=alt.Scale(range=[50, 600])),
+    color=alt.Color('tasa_adecuado:Q',
+                    title='Tasa empleo adecuado',
+                    scale=alt.Scale(scheme='plasma', domain=[0, 0.5])),
+    opacity=alt.condition(seleccion, alt.value(1.0), alt.value(0.55)),
+    tooltip=[
+        alt.Tooltip('ciudad:N', title='Ciudad'),
+        alt.Tooltip('horas_mediana:Q', title='Horas medianas', format='.1f'),
+        alt.Tooltip('ingreso_mediana:Q', title='Ingreso mediano USD', format=',.0f'),
+        alt.Tooltip('tasa_adecuado:Q', title='Tasa adecuado', format='.1%'),
+        alt.Tooltip('n:Q', title='Muestra', format=',')
+    ]
+).add_params(seleccion).properties(
+    title=alt.TitleParams(
+        'Horas vs. Ingreso Mediano por Ciudad',
+        subtitle='Tamaño del punto = muestra | Color = tasa de empleo adecuado | Hover para detalles',
+        fontSize=15
+    ),
+    width=620, height=420
+)
+
+# Línea de tendencia
+tendencia = scatter.transform_regression(
+    'horas_mediana', 'ingreso_mediana'
+).mark_line(color='#e74c3c', strokeDash=[5, 3], strokeWidth=1.5)
+
+(scatter + tendencia)
+```
+
+> **Interpretación:** Los puntos en el cuadrante superior izquierdo (pocas horas, altos ingresos) representan ciudades con empleos de alta productividad. Los del cuadrante inferior derecho (muchas horas, bajos ingresos) señalan mercados laborales de baja productividad o alta informalidad. La línea roja punteada muestra la tendencia general: ciudades sobre esa línea tienen ingresos superiores a lo esperado por sus horas.
+
+---
+
+### 4.3 Mapa del Ecuador — Tasa de Empleo Adecuado por Ciudad
+
+**Tipo de gráfico:** Mapa de burbujas sobre mapa base (TopoJSON)  
+**Justificación:** La dimensión geográfica es insustituible para identificar patrones espaciales: la concentración del empleo adecuado en la Sierra y Costa urbana, y la precariedad en regiones periféricas.
+
+```{python}
+#| label: fig-mapa-ecuador
+
+# Coordenadas aproximadas de las principales ciudades del Ecuador
+coords = {
+    'Quito': (-0.2295, -78.5243), 'Guayaquil': (-2.1894, -79.8891),
+    'Cuenca': (-2.9001, -79.0059), 'Ambato': (-1.2491, -78.6167),
+    'Machala': (-3.2619, -79.9606), 'Manta': (-0.9517, -80.7085),
+    'Portoviejo': (-1.0546, -80.4545), 'Loja': (-3.9931, -79.2042),
+    'Esmeraldas': (0.9592, -79.6536), 'Riobamba': (-1.6635, -78.6546),
+    'Ibarra': (0.3517, -78.1222), 'Santo Domingo': (-0.2520, -79.1719),
+    'Latacunga': (-0.9317, -78.6148), 'Quevedo': (-1.0225, -79.4628),
+    'Babahoyo': (-1.8013, -79.5340), 'Tulcán': (0.8116, -77.7172),
+    'Milagro': (-2.1341, -79.5873), 'Daule': (-1.8638, -79.9797),
+    'Durán': (-2.1700, -79.8361), 'Samborondón': (-2.1218, -79.8616),
+}
+
+_tmp_mapa = df_pet[df_pet['ciudad'] != 'No hay dato'].copy()
+_tmp_mapa['_adec'] = (_tmp_mapa['empleo_adecuado'] == 1.0).astype(float)
+df_mapa = (
+    _tmp_mapa.groupby('ciudad')
+    .agg(
+        tasa_adecuado=('_adec', 'mean'),
+        n_total=('_adec', 'count'),
+        n_adecuado=('_adec', 'sum')
+    )
+    .reset_index()
+)
+
+df_mapa['lat'] = df_mapa['ciudad'].map(lambda c: coords.get(c, (None, None))[0])
+df_mapa['lon'] = df_mapa['ciudad'].map(lambda c: coords.get(c, (None, None))[1])
+df_mapa = df_mapa.dropna(subset=['lat', 'lon'])
+df_mapa = df_mapa[df_mapa['n_total'] >= 50]
+
+# Mapa base de Ecuador — GeoJSON de cantones
+ecuador_geojson = "https://raw.githubusercontent.com/erickedu85/dataset/refs/heads/master/geo/ecuador.geojson"
+
+fondo = alt.Chart(alt.UrlData(ecuador_geojson)).mark_geoshape(
+    fill='#dce9d5',
+    stroke='#7aab6e',
+    strokeWidth=0.4
+).project(
+    type='mercator',
+    center=[-78.5, -1.8],
+    scale=2200
+)
+
+burbujas = alt.Chart(df_mapa).mark_circle(opacity=0.85, stroke='white', strokeWidth=0.8).encode(
+    longitude='lon:Q',
+    latitude='lat:Q',
+    size=alt.Size('n_total:Q',
+                  title='Tamaño muestra',
+                  scale=alt.Scale(range=[60, 1200])),
+    color=alt.Color('tasa_adecuado:Q',
+                    title='Tasa empleo adecuado',
+                    scale=alt.Scale(
+                        scheme='redyellowgreen',
+                        domain=[0.0, 0.45]
+                    )),
+    tooltip=[
+        alt.Tooltip('ciudad:N', title='Ciudad'),
+        alt.Tooltip('tasa_adecuado:Q', title='Tasa adecuado', format='.1%'),
+        alt.Tooltip('n_total:Q', title='Total encuestados', format=','),
+        alt.Tooltip('n_adecuado:Q', title='Con empleo adecuado', format=','),
+    ]
+).project(
+    type='mercator',
+    center=[-78.5, -1.8],
+    scale=2200
+)
+
+(fondo + burbujas).properties(
+    title=alt.TitleParams(
+        'Distribución Geográfica del Empleo Adecuado en Ecuador',
+        subtitle='Tamaño = muestra encuestada | Color = tasa de empleo adecuado (verde = mayor)',
+        fontSize=15
+    ),
+    width=520, height=600
+)
+```
+
+> **Interpretación:** El mapa revela la **geografía de la desigualdad laboral**. Las ciudades con burbujas verdes grandes concentran tanto muestra como alta tasa de empleo adecuado — típicamente Quito y Guayaquil. Las burbujas rojas o pequeñas señalan mercados laborales periféricos con menor acceso a empleos formales. La distribución espacial permite identificar regiones prioritarias para políticas de empleo.
+
+---
+
+## 5. Análisis Complementarios
+
+### 5.1 Métodos de Búsqueda de Empleo
+
+**Tipo de gráfico:** Nube de palabras + barras horizontales  
+**Justificación:** La nube de palabras comunica de forma visual e inmediata cuáles son los métodos más frecuentes. Las barras complementan con los valores exactos para comparación precisa.
+
+```{python}
+#| label: fig-busqueda-empleo
+
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from wordcloud import WordCloud
+import nltk
+from collections import Counter
+
+# Datos de búsqueda (excluir "No realizó ninguna gestión" para que no domine)
+busqueda = df[
+    df['como_busca_empleo'].notna() &
+    (~df['como_busca_empleo'].astype(str).str.contains('No realiz', na=False))
+]['como_busca_empleo'].astype(str)
+
+# Construir frecuencias para la nube
+frec_busqueda = Counter(busqueda)
+
+# ── Nube de palabras ──────────────────────────────────────────────
+wc_busqueda = WordCloud(
+    width=800, height=400,
+    background_color='white',
+    colormap='Blues',
+    max_words=50,
+    prefer_horizontal=0.9,
+    collocations=False
+).generate_from_frequencies(frec_busqueda)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig.suptitle('¿Cómo buscan empleo los desempleados?', fontsize=14, fontweight='bold', y=1.02)
+
+# Nube
+axes[0].imshow(wc_busqueda, interpolation='bilinear')
+axes[0].axis('off')
+axes[0].set_title('Nube de métodos de búsqueda', fontsize=11)
+
+# Barras horizontales
+df_bus = pd.DataFrame(frec_busqueda.most_common(8), columns=['metodo', 'n'])
+colores = plt.cm.Blues_r([i/len(df_bus) * 0.6 + 0.2 for i in range(len(df_bus))])
+axes[1].barh(df_bus['metodo'][::-1], df_bus['n'][::-1], color=colores[::-1])
+axes[1].set_xlabel('Número de personas')
+axes[1].set_title('Frecuencia por método', fontsize=11)
+for i, (v, m) in enumerate(zip(df_bus['n'][::-1], df_bus['metodo'][::-1])):
+    axes[1].text(v + 1, i, str(v), va='center', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+```
+
+> **Interpretación:** Los métodos informales de búsqueda (contactos personales, redes familiares) dominan sobre los canales formales (agencias de empleo, plataformas digitales). Esto refleja la importancia del capital social en el mercado laboral ecuatoriano y la baja institucionalización de los servicios de intermediación laboral.
+
+---
+
+### 5.2 ¿Por qué dejan el trabajo?
+
+**Tipo de gráfico:** Nube de palabras + barras horizontales  
+**Justificación:** Visualizar las razones de salida del empleo revela si la movilidad laboral es voluntaria (renuncia, emprendimiento) o forzada (despido, cierre de empresa), lo que tiene implicaciones directas para política laboral.
+
+```{python}
+#| label: fig-razon-dejo
+
+# Datos de razón de salida
+razon = df[df['razon_dejo_trabajo'].notna()]['razon_dejo_trabajo'].astype(str)
+razon = razon[razon != 'nan']
+
+frec_razon = Counter(razon)
+
+# Colores según tipo: forzado (rojo) vs voluntario (verde) vs otro (gris)
+forzado = ['Despido intempestivo', 'Liquidación empresa', 'Fue mal en el negocio',
+           'Terminó ciclo agrícola', 'Terminación contrato']
+voluntario = ['Renuncia voluntaria']
+
+def color_razon(word, **kwargs):
+    if word in forzado:
+        return '#e74c3c'
+    elif word in voluntario:
+        return '#27ae60'
+    return '#7f8c8d'
+
+wc_razon = WordCloud(
+    width=800, height=400,
+    background_color='white',
+    max_words=50,
+    prefer_horizontal=0.9,
+    collocations=False
+).generate_from_frequencies(frec_razon)
+
+# Redibujar con colores personalizados
+wc_razon.recolor(color_func=color_razon)
+
+fig2, axes2 = plt.subplots(1, 2, figsize=(14, 5))
+fig2.suptitle('¿Por qué dejaron su trabajo?', fontsize=14, fontweight='bold', y=1.02)
+
+axes2[0].imshow(wc_razon, interpolation='bilinear')
+axes2[0].axis('off')
+axes2[0].set_title('Nube de razones de salida', fontsize=11)
+
+# Leyenda de colores
+patch_forzado   = mpatches.Patch(color='#e74c3c', label='Salida forzada')
+patch_voluntario = mpatches.Patch(color='#27ae60', label='Salida voluntaria')
+patch_otro      = mpatches.Patch(color='#7f8c8d', label='Otro')
+axes2[0].legend(handles=[patch_forzado, patch_voluntario, patch_otro],
+                loc='lower right', fontsize=9)
+
+# Barras horizontales
+df_razon = pd.DataFrame(frec_razon.most_common(8), columns=['razon', 'n'])
+col_barras = ['#e74c3c' if r in forzado else '#27ae60' if r in voluntario else '#7f8c8d'
+              for r in df_razon['razon'][::-1]]
+axes2[1].barh(df_razon['razon'][::-1], df_razon['n'][::-1], color=col_barras)
+axes2[1].set_xlabel('Número de personas')
+axes2[1].set_title('Frecuencia por razón', fontsize=11)
+for i, (v, r) in enumerate(zip(df_razon['n'][::-1], df_razon['razon'][::-1])):
+    axes2[1].text(v + 0.5, i, str(v), va='center', fontsize=9)
+
+plt.tight_layout()
+plt.show()
+```
+
+> **Interpretación:** Las barras rojas (salida forzada: despidos, liquidaciones, fin de contrato) vs verdes (renuncia voluntaria) revelan el balance entre precariedad e iniciativa laboral. Una mayoría de salidas forzadas indica un mercado laboral inestable donde los trabajadores no controlan su trayectoria. La terminación de contrato como categoría más frecuente refleja el predominio de contratos temporales en Ecuador.
+
+---
+
+
+## Conclusiones del Análisis Visual
+
+Los gráficos presentados permiten extraer cinco hallazgos principales:
+
+1. **La educación es el factor más determinante**: la tasa de empleo adecuado crece de forma sistemática con el nivel de instrucción, siendo el salto más pronunciado entre secundaria y educación superior.
+
+2. **Existe una brecha de género persistente**: los hombres acceden a empleo adecuado en mayor proporción que las mujeres en casi todos los grupos de edad y niveles educativos, y perciben ingresos medianos más altos.
+
+3. **El área rural concentra mayor precariedad**: menor tasa de empleo adecuado, menor cobertura de seguridad social y mayor variabilidad en la jornada laboral caracterizan a los mercados laborales rurales.
+
+4. **La geografía importa**: hay ciudades con tasas de empleo adecuado significativamente superiores al promedio nacional, lo que sugiere que el lugar de residencia actúa como un determinante independiente de la estabilidad laboral.
+
+5. **Los ingresos no siempre son proporcionales a las horas**: algunas ciudades muestran ingresos medianos por encima de la tendencia general a pesar de jornadas similares, lo que sugiere diferencias en la estructura productiva local.

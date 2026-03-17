@@ -1,0 +1,25 @@
+---
+title: "Factores de Estabilidad Laboral en Ecuador 2026"
+subtitle: "Un análisis sociodemográfico basado en la ENEMDU"
+author: "Fernando Rodriguez - Danilo Serrano"
+---
+
+## Contexto del Proyecto
+El mercado laboral ecuatoriano es un sistema complejo donde convergen factores educativos, geográficos y étnicos. Este proyecto analiza la Encuesta Nacional de Empleo, Desempleo y Subempleo (**ENEMDU**) de enero 2026 para identificar qué variables determinan que una persona acceda a un **empleo adecuado**.
+
+## Motivación
+¿Es la maestría el diferencial definitivo? ¿Cómo influye la ubicación geográfica o el género en la estabilidad? Este análisis busca visibilizar las brechas y oportunidades en el acceso al trabajo digno en el Ecuador actual.
+
+## Preguntas Principales
+* **¿Cuál es el perfil del trabajador con empleo adecuado?** (Edad, educación, género).
+* **¿Existe una relación directa entre el nivel de instrucción y las horas de trabajo?**
+* **¿Cómo varían las oportunidades laborales según la ciudad y la etnia?**
+
+## El Dataset
+Se utiliza la base de microdatos de la **ENEMDU 2026 - Persona**, la cual contiene registros detallados sobre la condición de actividad, ingresos, educación y características del hogar de miles de ecuatorianos.
+
+::: {.callout-note}
+### Secciones del Proyecto
+1.  [Limpieza y Preparación de Datos](data_cleaning.qmd): El proceso técnico de curación.
+2.  [Análisis y Visualizaciones](visualizations.qmd): Hallazgos y narrativa visual.
+:::

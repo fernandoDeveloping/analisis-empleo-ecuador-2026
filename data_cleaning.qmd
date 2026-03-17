@@ -1,0 +1,361 @@
+---
+title: "Limpieza y Preparación de Datos"
+subtitle: "ENEMDU — Encuesta Nacional de Empleo, Desempleo y Subempleo | Enero 2026"
+author: "Análisis de Mercado Laboral"
+execute:
+  warning: false
+  message: false
+---
+
+## Introducción
+
+Este documento registra el proceso de limpieza y preparación de los datos provenientes de la **ENEMDU (Encuesta Nacional de Empleo, Desempleo y Subempleo)** del período enero 2026, publicada por el INEC. El objetivo es transformar el archivo fuente en formato `.sav` (SPSS) en un dataset estructurado y limpio, listo para el análisis visual.
+
+El flujo de ejecución sigue este orden estricto para evitar errores de columna no encontrada:
+
+1. Carga del archivo fuente
+2. Exploración inicial sobre los datos crudos
+3. Recodificación de `condact` (base de todas las variables derivadas)
+4. Construcción de horas trabajadas totales
+5. Manejo de valores faltantes (sobre columnas ya existentes)
+6. Mapeo de ciudades y etnia
+7. Selección final, renombrado y exportación
+
+---
+
+## Carga del Dataset
+
+### Librerías necesarias
+
+```{python}
+import pandas as pd
+import numpy as np
+```
+
+> **Justificación:** `pandas` maneja la lectura del `.sav` y todas las transformaciones tabulares. `numpy` permite operaciones vectorizadas eficientes equivalentes al `RECODE` y `COMPUTE` de SPSS.
+
+### Lectura del archivo SPSS
+
+```{python}
+file_path = 'SPSS/enemdu_persona_2026_01.sav'
+df = pd.read_spss(file_path)
+
+print(f"Filas cargadas:       {df.shape[0]:,}")
+print(f"Columnas disponibles: {df.shape[1]}")
+
+
+for col in df.select_dtypes(['category', 'object']).columns:
+    try:
+        df[col] = df[col].astype(str).str.strip()
+        df[col] = df[col].replace('nan', float('nan'))
+    except Exception:
+        pass
+
+# ── Mapear columnas Categorical clave a numérico ─────────────────
+
+# area: Urbana/Rural -> 1/2
+df['area'] = df['area'].map({'Urbana': 1, 'Rural': 2})
+print("Area:", df['area'].value_counts().to_dict())
+
+# p10a: nivel educativo -> escala numérica ordinal
+mapa_p10a = {
+    'Ninguno': 1,
+    'Centro de alfabetización': 2,
+    'Jardín de infantes': 3,
+    'Primaria': 4,
+    'Educación Básica': 5,
+    'Secundaria': 6,
+    'Educación  Media': 7,
+    'Educación Media': 7,
+    'Superior no universitario': 8,
+    'Superior Universitario': 9,
+    'Post-grado': 10
+}
+df['p10a'] = df['p10a'].map(mapa_p10a)
+print("Nivel educativo:", df['p10a'].value_counts().to_dict())
+
+# p02: género -> 1=Hombre, 2=Mujer
+df['p02'] = df['p02'].map({'Hombre': 1, 'Mujer': 2})
+
+# p05b: seguro -> numérico si viene como texto
+mapa_seguro = {
+    'IESS, seguro general': 1,
+    'IESS, seguro voluntario': 2,
+    'IESS, seguro campesino': 3,
+    'Es jubilado del IESS/ISSFA/ISSPOL': 4,
+    'Issfa o Isspol': 4,
+    'Seguro privado': 5,
+    'Ninguno': 6,
+    'No sabe': 7
+}
+df['p05b'] = df['p05b'].map(mapa_seguro).fillna(
+    pd.to_numeric(df['p05b'], errors='coerce')
+)
+```
+
+> **Justificación:** `pd.read_spss()` preserva automáticamente las etiquetas de valor (*value labels*) del archivo, lo que permite verificar la codificación original antes de cualquier transformación. En esta versión de la ENEMDU, variables como `condact` vienen como texto etiquetado y deben recodificarse antes de usarse analíticamente.
+
+---
+
+## Exploración Inicial del Dataset
+
+Esta sección se ejecuta **sobre los datos crudos**, antes de cualquier modificación.
+
+### Vista previa de `condact`
+
+```{python}
+# condact llega como categoría de texto desde el .sav
+df['condact'].head()
+```
+
+### Distribución de frecuencias por columna
+
+```{python}
+# Revisión sistemática: detecta tipos, NaN estructurales e inconsistencias
+for col in df.columns:
+    print(f"Columna: {col}")
+    print(df[col].value_counts(dropna=False))
+    print("-" * 50)
+```
+
+> **Justificación:** La exploración previa permite detectar: (1) variables con texto que deben reconvertirse a numérico, (2) NaN estructurales por diseño condicional del cuestionario, y (3) columnas que el archivo ya trae precalculadas — como `empleo` y `desempleo` — evitando recalcularlas innecesariamente.
+
+---
+
+## Recodificación de `condact`
+
+La variable `condact` llega como texto etiquetado desde el `.sav`. Se mapea a la escala numérica oficial del INEC antes de cualquier otra transformación, ya que varias variables dependen de ella.
+
+```{python}
+# Mapeo de etiquetas de texto a códigos numéricos oficiales INEC
+# Fuente: https://anda.inec.gob.ec/anda/index.php/catalog/1048/datafile/F17/V1815
+mapa_condact = {
+    "Empleo Adecuado/Pleno": 1,
+    "Subempleo por insuficiencia de tiempo de trabajo": 2,
+    "Subempleo por insuficiencia de ingresos": 3,
+    "Otro empleo no pleno": 4,
+    "Empleo no remunerado": 5,
+    "Empleo no clasificado": 6,
+    "Desempleo abierto": 7,
+    "Desempleo oculto": 8,
+    "Población Económicamente Inactiva": 9
+}
+
+df["condact"] = df["condact"].map(mapa_condact)
+
+# Menores de 15 años reciben código 0: quedan fuera de la PET
+# p03 viene como string tras el strip global -> convertir a numérico primero
+df["p03"] = pd.to_numeric(df["p03"], errors='coerce')
+df.loc[df['p03'] < 15, 'condact'] = 0
+
+print("Distribución de condact tras recodificación:")
+print(df["condact"].value_counts())
+```
+
+> **Justificación:** La escala numérica 1–9 permite usar `.between()` para definir subpoblaciones de forma compacta. El código 0 para menores de 15 años los excluye explícitamente de la Población en Edad de Trabajar (PET), en línea con la metodología INEC. Este paso debe ocurrir antes del manejo de NaN porque los filtros de edad usan `p03`.
+
+---
+
+## Construcción de Horas Trabajadas Totales
+
+El archivo fuente no incluye una variable de horas totales precalculada. Se construye sumando las horas del empleo principal (`p51a`) y del empleo secundario (`p51b`), que son las únicas columnas con valores numéricos de horas en el cuestionario.
+
+```{python}
+# Convertir a numérico (vienen como Categorical desde el .sav)
+df['p51a'] = pd.to_numeric(df['p51a'], errors='coerce')  # horas empleo principal
+df['p51b'] = pd.to_numeric(df['p51b'], errors='coerce')  # horas empleo secundario
+
+# Horas totales = suma de ambos empleos (NaN si no trabaja en ninguno)
+df['horas_trabajo_totales'] = df['p51a'].add(df['p51b'], fill_value=0)
+df.loc[df['p51a'].isna() & df['p51b'].isna(), 'horas_trabajo_totales'] = np.nan
+
+# Versión para visualización: 0 en lugar de NaN (inactivos y desempleados)
+df['horas_visual'] = df['horas_trabajo_totales'].fillna(0)
+
+print("Distribución de horas totales trabajadas:")
+print(df['horas_trabajo_totales'].describe())
+```
+
+> **Justificación:** `p51a` registra horas en el trabajo principal y `p51b` en el secundario. Se usa `fill_value=0` en la suma para que quien solo tiene un empleo no pierda sus horas por el NaN del otro. Sin embargo, si ambas columnas son NaN (persona sin empleo), el resultado se fuerza a NaN para no introducir ceros artificiales en los promedios de ocupados.
+
+---
+
+## Manejo de Valores Faltantes
+
+Esta sección opera **sobre columnas que ya existen** en el dataframe. Ejecutarla antes de la recodificación y construcción de variables causaría `KeyError`.
+
+La ENEMDU tiene diseño de cuestionario condicional: preguntas sobre búsqueda de empleo solo se hacen a desempleados, preguntas laborales solo a ocupados, etc. Los NaN en esas variables son **ausencias estructurales por diseño**, no errores de medición.
+
+### Variables categóricas: NaN → `"No hay dato"`
+
+```{python}
+# p06 = estado_civil | p07 = asiste_a_clases
+# Estas columnas son Categorical, por lo que se convierte a str antes de rellenar.
+cols_cat = ['p06', 'p07']
+for col in cols_cat:
+    df[col] = df[col].astype(str).replace('nan', 'No hay dato')
+```
+
+> **Justificación:** Las columnas Categorical de SPSS no admiten valores nuevos sin registrarlos primero como categoría válida. Convertir a `str` resuelve esto y produce una columna de texto directamente usable en gráficos. El valor `'nan'` que genera `.astype(str)` se reemplaza por la etiqueta `'No hay dato'` para claridad visual.
+
+---
+
+## Mapeo de Variables Geográficas y Sociodemográficas
+
+### Mapeo de ciudades
+
+```{python}
+# El catálogo traduce los códigos numéricos del .sav a nombres legibles
+ciudades = pd.read_excel('SPSS/Ciudades.xlsx')
+ciudades.head()
+```
+
+```{python}
+# ciudad viene como float64 (ej. 10150.0) y el catálogo tiene int64 (10150).
+# Se convierte a Int64 nullable para alinear tipos sin perder los NaN.
+df['ciudad'] = df['ciudad'].astype('Int64').map(ciudades.set_index('Value')['Category'])
+df['ciudad'] = df['ciudad'].fillna('No hay dato')
+
+print(f"Ciudades distintas en la muestra: {df['ciudad'].nunique()}")
+df['ciudad'].value_counts().head(10)
+```
+
+> **Justificación:** El archivo `.sav` almacena ciudades como `float64` (ej. `10150.0`) mientras que el catálogo `Ciudades.xlsx` usa `int64` (`10150`). La discrepancia de tipo impide el mapeo directo. Convertir a `Int64` nullable de pandas alinea los tipos sin perder los NaN, permitiendo que `.map()` encuentre todas las correspondencias correctamente.
+
+### Construcción de `adec` (empleo adecuado)
+
+```{python}
+# adec no viene precalculada en el archivo; se deriva de condact
+# condact == 1 corresponde a Empleo Adecuado/Pleno
+df['adec'] = np.where(df['condact'] == 1, 1.0, np.nan)
+```
+
+> **Justificación:** A diferencia de `empleo` y `desempleo`, la variable `adec` no viene en el archivo fuente. Se construye desde `condact` ya recodificado: código 1 = Empleo Adecuado/Pleno. Se usa `np.nan` en lugar de `0` para ser consistente con la convención de indicadores del INEC.
+
+### Mapeo de etnia
+
+```{python}
+# La etnia está en p15 (autoidentificación étnica)
+mapping_etnia = {
+    1: 'Mestizo',
+    2: 'Indígena',
+    3: 'Afro/Negro',
+    4: 'Mulato',
+    5: 'Blanco',
+    6: 'Otros'
+}
+df['etnia_nombre'] = pd.to_numeric(df['p15'], errors='coerce') \
+                       .map(mapping_etnia).fillna('No hay dato')
+```
+
+> **Justificación:** La variable de autoidentificación étnica se encuentra en `p15`, no en una columna llamada `etnia`. Se convierte a numérico primero porque viene como Categorical desde el `.sav`, y se rellena con `'No hay dato'` para no excluir registros.
+
+---
+
+## Selección Final de Variables
+
+Se selecciona el subconjunto relevante para el análisis visual y se renombran con etiquetas descriptivas en español. **Este paso ocurre al final**, después de que todas las columnas necesarias han sido creadas.
+
+```{python}
+df_final = df[[
+    'horas_trabajo_totales', 'horas_visual',
+    'area', 'ciudad', 'etnia_nombre',
+    'condact', 'empleo', 'desempleo', 'adec',
+    'p01', 'p02', 'p03', 'p05b', 'p06', 'p07',
+    'p10a', 'p32', 'p38', 'p42', 'p45',
+    'ingrl', 'ingpc'
+]].rename(columns={
+    'p01':          'personas_hogar',
+    'p02':          'genero',
+    'p03':          'edad',
+    'p05b':         'seguro',
+    'p06':          'estado_civil',
+    'p07':          'asiste_a_clases',
+    'condact':      'condicion_actividad',
+    'adec':         'empleo_adecuado',
+    'p10a':         'nivel_educativo',
+    'p45':          'tiempo_experiencia',
+    'p32':          'como_busca_empleo',
+    'p38':          'razon_dejo_trabajo',
+    'p42':          'ocupacion_actual',
+    'etnia_nombre': 'etnia',
+    'ingrl':        'ingreso_laboral',
+    'ingpc':        'ingreso_per_capita'
+})
+```
+
+> **Justificación:** Se incluyen `ingrl` e `ingpc` porque el archivo sí las trae precalculadas y son relevantes para el análisis laboral. Se excluyen variables operativas del cuestionario (identificadores de vivienda, hogar, conglomerado) que no aportan al análisis sustantivo.
+
+### Verificación del dataset final
+
+```{python}
+df_final.info()
+```
+
+```{python}
+print(f"Total filas:    {len(df_final):,}")
+print(f"Total columnas: {len(df_final.columns)}")
+print(f"Ciudades representadas: {df_final['ciudad'].nunique()}")
+df_final['ciudad'].value_counts().head(10)
+```
+
+---
+
+## Exportación del Dataset Limpio
+
+```{python}
+cols_numericas = [
+    'edad', 'personas_hogar', 'nivel_educativo',
+    'condicion_actividad', 'empleo_adecuado', 'desempleado',
+    'horas_trabajo_totales', 'horas_visual',
+    'ingreso_laboral', 'ingreso_per_capita'
+]
+for col in cols_numericas:
+    if col in df_final.columns:
+        df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+
+# area viene como Categorical texto ('Urbana'/'Rural') -> convertir a código numérico
+if 'area' in df_final.columns:
+    df_final['area'] = df_final['area'].astype(str).map(
+        {'Urbana': 1, 'Rural': 2, '1.0': 1, '2.0': 2, '1': 1, '2': 2}
+    )
+
+# genero y seguro pueden venir como Categorical -> numérico
+for col in ['genero', 'seguro']:
+    if col in df_final.columns:
+        df_final[col] = pd.to_numeric(df_final[col], errors='coerce')
+
+# empleo y desempleado vienen como texto etiquetado desde el .sav
+# los convertimos a 1.0/NaN para que sean usables como indicadores
+if 'empleo' in df_final.columns:
+    df_final['empleo'] = df_final['empleo'].map(
+        lambda x: 1.0 if str(x).strip() in ['Población con empleo', '1.0', '1'] else float('nan')
+    )
+if 'desempleado' in df_final.columns:
+    df_final['desempleado'] = df_final['desempleado'].map(
+        lambda x: 1.0 if str(x).strip() in ['Población con desempleo', '1.0', '1'] else float('nan')
+    )
+
+df_final.to_csv('SPSS/ENEMDU_clean.csv', index=False)
+print('Dataset exportado exitosamente → SPSS/ENEMDU_clean.csv')
+print(df_final[['area','genero','nivel_educativo','ingreso_laboral','empleo_adecuado']].dtypes)
+```
+
+> **Justificación:** Se exporta en CSV para garantizar compatibilidad con las herramientas de visualización (Altair, Plotly, etc.) y facilitar el control de versiones. El archivo fuente `.sav` original no se modifica en ningún momento.
+
+---
+
+## Resumen de Decisiones de Limpieza
+
+| Decisión | Columnas afectadas | Razón |
+|---|---|---|
+| Explorar antes de transformar | Todas | Diagnosticar tipos, NaN y columnas precalculadas |
+| Recodificar `condact` primero | `condact` | Base de todas las variables derivadas; debe ser numérico |
+| Código 0 para menores de 15 | `condact`, `p03` | Metodología INEC: PET inicia a los 15 años |
+| No reconstruir variables precalculadas | `empleo`, `desempleo`, `adec` | El `.sav` ya las trae; recalcularlas introduciría inconsistencias |
+| Horas = `p51a + p51b` | `horas_trabajo_totales` | Única fuente numérica de horas en el cuestionario |
+| NaN bilateral → NaN en horas | `horas_trabajo_totales` | Evita introducir ceros para inactivos en promedios de ocupados |
+| `.astype(str)` antes de rellenar | `p06`, `p07`, `ciudad` | Columnas Categorical no admiten categorías nuevas directamente |
+| `'No hay dato'` en categóricas | `ciudad`, `estado_civil`, `asiste_a_clases`, `etnia` | Evita excluir registros en visualizaciones agregadas |
+| Renombrado al final en `df_final` | Todas las seleccionadas | Evita `KeyError` al usar nombres descriptivos antes de que existan |
+| Exportación CSV | — | Compatibilidad universal con herramientas de visualización |

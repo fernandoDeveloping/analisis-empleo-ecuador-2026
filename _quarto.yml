@@ -1,0 +1,38 @@
+project:
+  type: website
+  output-dir: docs  # Esto es ideal para publicar en GitHub Pages
+
+website:
+  title: "Mercado Laboral Ecuador 2026"
+  description: "Análisis de estabilidad laboral y factores determinantes mediante ENEMDU."
+  
+  # Configuración del Menú Superior
+  navbar:
+    background: primary
+    search: true
+    left:
+      - text: "Inicio"
+        file: index.qmd
+      - text: "Preparación de Datos"
+        file: data_cleaning.qmd
+      - text: "Visualizaciones"
+        file: visualizations.qmd
+    right:
+      - icon: github
+        href: https://github.com/tu-usuario/tu-repositorio  # Reemplaza con tu link real
+
+format:
+  html:
+    theme: 
+      light: cosmo
+      dark: darkly
+    toc: true
+    toc-title: "En esta página"
+    code-fold: true  # Permite que el código esté oculto por defecto
+    code-summary: "Mostrar código"
+    code-copy: true
+    lang: es         # Configura el idioma de la interfaz a español
+
+# Configuración de ejecución de celdas
+execute:
+  freeze: auto       # Solo re-ejecuta celdas si el archivo .qmd ha cambiado
