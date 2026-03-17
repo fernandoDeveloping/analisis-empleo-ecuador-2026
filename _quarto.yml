@@ -1,6 +1,6 @@
 project:
   type: website
-  output-dir: docs  # Esto es ideal para publicar en GitHub Pages
+  output-dir: docs  
 
 website:
   title: "Mercado Laboral Ecuador 2026"
@@ -19,7 +19,7 @@ website:
         file: visualizations.qmd
     right:
       - icon: github
-        href: https://github.com/tu-usuario/tu-repositorio  # Reemplaza con tu link real
+        href: https://github.com/fernandoDeveloping/analisis-empleo-ecuador-2026
 
 format:
   html:
@@ -28,11 +28,11 @@ format:
       dark: darkly
     toc: true
     toc-title: "En esta página"
-    code-fold: true  # Permite que el código esté oculto por defecto
+    code-fold: true  
     code-summary: "Mostrar código"
     code-copy: true
-    lang: es         # Configura el idioma de la interfaz a español
+    lang: es         
 
 # Configuración de ejecución de celdas
 execute:
-  freeze: auto       # Solo re-ejecuta celdas si el archivo .qmd ha cambiado
+  freeze: auto       
