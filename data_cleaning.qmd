@@ -1,7 +1,6 @@
 ---
 title: "Limpieza y Preparación de Datos"
 subtitle: "ENEMDU — Encuesta Nacional de Empleo, Desempleo y Subempleo | Enero 2026"
-author: "Análisis de Mercado Laboral"
 execute:
   warning: false
   message: false

@@ -714,130 +714,139 @@ burbujas = alt.Chart(df_mapa).mark_circle(opacity=0.85, stroke='white', strokeWi
 
 ## 5. Análisis Complementarios
 
-### 5.1 Métodos de Búsqueda de Empleo
+### 5.1 Métodos de Búsqueda de Empleo por Género
 
-**Tipo de gráfico:** Nube de palabras + barras horizontales  
-**Justificación:** La nube de palabras comunica de forma visual e inmediata cuáles son los métodos más frecuentes. Las barras complementan con los valores exactos para comparación precisa.
+**Tipo de gráfico:** Barras horizontales agrupadas por género  
+**Justificación:** Comparar los métodos de búsqueda entre hombres y mujeres revela si existen diferencias en el acceso a canales formales e informales de intermediación laboral.
 
 ```{python}
 #| label: fig-busqueda-empleo
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from wordcloud import WordCloud
-import nltk
-from collections import Counter
-
-# Datos de búsqueda (excluir "No realizó ninguna gestión" para que no domine)
-busqueda = df[
+# Excluir "No realizó ninguna gestión" para enfocarse en quienes sí buscan
+df_bus = df[
     df['como_busca_empleo'].notna() &
+    df['genero_txt'].isin(['Hombre', 'Mujer']) &
     (~df['como_busca_empleo'].astype(str).str.contains('No realiz', na=False))
-]['como_busca_empleo'].astype(str)
+].copy()
 
-# Construir frecuencias para la nube
-frec_busqueda = Counter(busqueda)
+bus_counts = (
+    df_bus.groupby(['como_busca_empleo', 'genero_txt'])
+    .size()
+    .reset_index(name='n')
+)
 
-# ── Nube de palabras ──────────────────────────────────────────────
-wc_busqueda = WordCloud(
-    width=800, height=400,
-    background_color='white',
-    colormap='Blues',
-    max_words=50,
-    prefer_horizontal=0.9,
-    collocations=False
-).generate_from_frequencies(frec_busqueda)
+# Ordenar por total descendente
+orden_bus = (
+    bus_counts.groupby('como_busca_empleo')['n']
+    .sum().sort_values(ascending=False).index.tolist()
+)
 
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-fig.suptitle('¿Cómo buscan empleo los desempleados?', fontsize=14, fontweight='bold', y=1.02)
+chart_bus = alt.Chart(bus_counts).mark_bar(cornerRadiusTopRight=4, cornerRadiusBottomRight=4).encode(
+    x=alt.X('n:Q', title='Número de personas'),
+    y=alt.Y('como_busca_empleo:N', title=None,
+            sort=orden_bus,
+            axis=alt.Axis(labelLimit=220)),
+    color=alt.Color('genero_txt:N',
+                    title='Género',
+                    scale=alt.Scale(
+                        domain=['Hombre', 'Mujer'],
+                        range=['#2980b9', '#e91e8c']
+                    )),
+    xOffset=alt.XOffset('genero_txt:N'),
+    tooltip=[
+        alt.Tooltip('como_busca_empleo:N', title='Método'),
+        alt.Tooltip('genero_txt:N', title='Género'),
+        alt.Tooltip('n:Q', title='Personas', format=',')
+    ]
+).properties(
+    title=alt.TitleParams(
+        '¿Cómo Buscan Empleo los Desempleados?',
+        subtitle='Por género — excluye quienes no realizaron ninguna gestión',
+        fontSize=15
+    ),
+    width=580, height=300
+)
 
-# Nube
-axes[0].imshow(wc_busqueda, interpolation='bilinear')
-axes[0].axis('off')
-axes[0].set_title('Nube de métodos de búsqueda', fontsize=11)
-
-# Barras horizontales
-df_bus = pd.DataFrame(frec_busqueda.most_common(8), columns=['metodo', 'n'])
-colores = plt.cm.Blues_r([i/len(df_bus) * 0.6 + 0.2 for i in range(len(df_bus))])
-axes[1].barh(df_bus['metodo'][::-1], df_bus['n'][::-1], color=colores[::-1])
-axes[1].set_xlabel('Número de personas')
-axes[1].set_title('Frecuencia por método', fontsize=11)
-for i, (v, m) in enumerate(zip(df_bus['n'][::-1], df_bus['metodo'][::-1])):
-    axes[1].text(v + 1, i, str(v), va='center', fontsize=9)
-
-plt.tight_layout()
-plt.show()
+chart_bus
 ```
 
-> **Interpretación:** Los métodos informales de búsqueda (contactos personales, redes familiares) dominan sobre los canales formales (agencias de empleo, plataformas digitales). Esto refleja la importancia del capital social en el mercado laboral ecuatoriano y la baja institucionalización de los servicios de intermediación laboral.
+> **Interpretación:** Los métodos informales (contactos personales, redes familiares) dominan sobre los canales formales. Si los hombres usan más plataformas digitales y las mujeres más redes personales, refleja diferencias en el capital social y acceso tecnológico. La baja frecuencia de agencias de empleo formales confirma la débil institucionalización de la intermediación laboral en Ecuador.
 
 ---
 
-### 5.2 ¿Por qué dejan el trabajo?
+### 5.2 ¿Por qué Dejan el Trabajo?
 
-**Tipo de gráfico:** Nube de palabras + barras horizontales  
-**Justificación:** Visualizar las razones de salida del empleo revela si la movilidad laboral es voluntaria (renuncia, emprendimiento) o forzada (despido, cierre de empresa), lo que tiene implicaciones directas para política laboral.
+**Tipo de gráfico:** Barras horizontales con color semántico por tipo de salida  
+**Justificación:** Distinguir visualmente entre salidas forzadas (despido, fin de contrato) y voluntarias (renuncia) permite evaluar el grado de precariedad e inestabilidad del mercado laboral.
 
 ```{python}
 #| label: fig-razon-dejo
 
-# Datos de razón de salida
-razon = df[df['razon_dejo_trabajo'].notna()]['razon_dejo_trabajo'].astype(str)
-razon = razon[razon != 'nan']
+df_razon = df[
+    df['razon_dejo_trabajo'].notna() &
+    df['genero_txt'].isin(['Hombre', 'Mujer'])
+].copy()
+df_razon = df_razon[df_razon['razon_dejo_trabajo'].astype(str) != 'nan']
 
-frec_razon = Counter(razon)
+razon_counts = (
+    df_razon.groupby(['razon_dejo_trabajo', 'genero_txt'])
+    .size()
+    .reset_index(name='n')
+)
 
-# Colores según tipo: forzado (rojo) vs voluntario (verde) vs otro (gris)
-forzado = ['Despido intempestivo', 'Liquidación empresa', 'Fue mal en el negocio',
-           'Terminó ciclo agrícola', 'Terminación contrato']
+# Categorizar tipo de salida para el color
+forzado    = ['Despido intempestivo', 'Liquidación empresa', 'Fue mal en el negocio',
+              'Terminó ciclo agrícola', 'Terminación contrato']
 voluntario = ['Renuncia voluntaria']
 
-def color_razon(word, **kwargs):
-    if word in forzado:
-        return '#e74c3c'
-    elif word in voluntario:
-        return '#27ae60'
-    return '#7f8c8d'
+razon_counts['tipo'] = razon_counts['razon_dejo_trabajo'].apply(
+    lambda r: 'Salida forzada' if r in forzado
+    else ('Salida voluntaria' if r in voluntario else 'Otro')
+)
 
-wc_razon = WordCloud(
-    width=800, height=400,
-    background_color='white',
-    max_words=50,
-    prefer_horizontal=0.9,
-    collocations=False
-).generate_from_frequencies(frec_razon)
+orden_razon = (
+    razon_counts.groupby('razon_dejo_trabajo')['n']
+    .sum().sort_values(ascending=False).index.tolist()
+)
 
-# Redibujar con colores personalizados
-wc_razon.recolor(color_func=color_razon)
+chart_razon = alt.Chart(razon_counts).mark_bar(
+    cornerRadiusTopRight=4, cornerRadiusBottomRight=4
+).encode(
+    x=alt.X('n:Q', title='Número de personas'),
+    y=alt.Y('razon_dejo_trabajo:N', title=None,
+            sort=orden_razon,
+            axis=alt.Axis(labelLimit=200)),
+    color=alt.Color('genero_txt:N',
+                    title='Género',
+                    scale=alt.Scale(
+                        domain=['Hombre', 'Mujer'],
+                        range=['#2980b9', '#e91e8c']
+                    )),
+    xOffset=alt.XOffset('genero_txt:N'),
+    tooltip=[
+        alt.Tooltip('razon_dejo_trabajo:N', title='Razón'),
+        alt.Tooltip('genero_txt:N', title='Género'),
+        alt.Tooltip('tipo:N', title='Tipo de salida'),
+        alt.Tooltip('n:Q', title='Personas', format=',')
+    ]
+).properties(
+    title=alt.TitleParams(
+        '¿Por Qué Dejaron su Trabajo?',
+        subtitle='Por género — comparación de razones de salida del empleo',
+        fontSize=15
+    ),
+    width=580, height=280
+)
 
-fig2, axes2 = plt.subplots(1, 2, figsize=(14, 5))
-fig2.suptitle('¿Por qué dejaron su trabajo?', fontsize=14, fontweight='bold', y=1.02)
+# Línea divisoria entre forzado y voluntario
+regla = alt.Chart(pd.DataFrame({'x': [0]})).mark_rule(
+    color='#e74c3c', strokeDash=[4, 3], strokeWidth=1.2
+).encode(x=alt.X('x:Q'))
 
-axes2[0].imshow(wc_razon, interpolation='bilinear')
-axes2[0].axis('off')
-axes2[0].set_title('Nube de razones de salida', fontsize=11)
-
-# Leyenda de colores
-patch_forzado   = mpatches.Patch(color='#e74c3c', label='Salida forzada')
-patch_voluntario = mpatches.Patch(color='#27ae60', label='Salida voluntaria')
-patch_otro      = mpatches.Patch(color='#7f8c8d', label='Otro')
-axes2[0].legend(handles=[patch_forzado, patch_voluntario, patch_otro],
-                loc='lower right', fontsize=9)
-
-# Barras horizontales
-df_razon = pd.DataFrame(frec_razon.most_common(8), columns=['razon', 'n'])
-col_barras = ['#e74c3c' if r in forzado else '#27ae60' if r in voluntario else '#7f8c8d'
-              for r in df_razon['razon'][::-1]]
-axes2[1].barh(df_razon['razon'][::-1], df_razon['n'][::-1], color=col_barras)
-axes2[1].set_xlabel('Número de personas')
-axes2[1].set_title('Frecuencia por razón', fontsize=11)
-for i, (v, r) in enumerate(zip(df_razon['n'][::-1], df_razon['razon'][::-1])):
-    axes2[1].text(v + 0.5, i, str(v), va='center', fontsize=9)
-
-plt.tight_layout()
-plt.show()
+chart_razon
 ```
 
-> **Interpretación:** Las barras rojas (salida forzada: despidos, liquidaciones, fin de contrato) vs verdes (renuncia voluntaria) revelan el balance entre precariedad e iniciativa laboral. Una mayoría de salidas forzadas indica un mercado laboral inestable donde los trabajadores no controlan su trayectoria. La terminación de contrato como categoría más frecuente refleja el predominio de contratos temporales en Ecuador.
+> **Interpretación:** Las barras muestran si hombres y mujeres enfrentan distintos tipos de salida laboral. Una mayor proporción de despidos en mujeres indica mayor vulnerabilidad ante decisiones del empleador. La terminación de contrato como razón más frecuente confirma el predominio de empleos temporales. La renuncia voluntaria —aunque menos frecuente— señala capacidad de agencia laboral.
 
 ---
 

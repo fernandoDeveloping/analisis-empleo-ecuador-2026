@@ -6,7 +6,6 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Análisis de Mercado Laboral">
 
 <title>Limpieza y Preparación de Datos – Mercado Laboral Ecuador 2026</title>
 <style>
@@ -110,10 +109,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
 
-
-
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
-
 
 
 </head>
@@ -379,12 +375,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="quarto-title-meta">
 
-    <div>
-    <div class="quarto-title-meta-heading">Autor/a</div>
-    <div class="quarto-title-meta-contents">
-             <p>Análisis de Mercado Laboral </p>
-          </div>
-  </div>
     
   
     
@@ -414,7 +404,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="carga-del-dataset">Carga del Dataset</h2>
 <section id="librerías-necesarias" class="level3">
 <h3 class="anchored" data-anchor-id="librerías-necesarias">Librerías necesarias</h3>
-<div id="5ab3d668" class="cell" data-execution_count="1">
+<div id="7d6ad447" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -427,7 +417,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="lectura-del-archivo-spss" class="level3">
 <h3 class="anchored" data-anchor-id="lectura-del-archivo-spss">Lectura del archivo SPSS</h3>
-<div id="acf920a4" class="cell" data-execution_count="2">
+<div id="59e6e759" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>file_path <span class="op">=</span> <span class="st">'SPSS/enemdu_persona_2026_01.sav'</span></span>
@@ -505,7 +495,7 @@ Nivel educativo: {6.0: 5231, 5.0: 5175, 4.0: 5098, 9.0: 4541, 7.0: 3737, 8.0: 80
 <p>Esta sección se ejecuta <strong>sobre los datos crudos</strong>, antes de cualquier modificación.</p>
 <section id="vista-previa-de-condact" class="level3">
 <h3 class="anchored" data-anchor-id="vista-previa-de-condact">Vista previa de <code>condact</code></h3>
-<div id="410660a7" class="cell" data-execution_count="3">
+<div id="1535bd9d" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># condact llega como categoría de texto desde el .sav</span></span>
@@ -523,7 +513,7 @@ Name: condact, dtype: str</code></pre>
 </section>
 <section id="distribución-de-frecuencias-por-columna" class="level3">
 <h3 class="anchored" data-anchor-id="distribución-de-frecuencias-por-columna">Distribución de frecuencias por columna</h3>
-<div id="feae3bba" class="cell" data-execution_count="4">
+<div id="02d899d5" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Revisión sistemática: detecta tipos, NaN estructurales e inconsistencias</span></span>
@@ -2298,7 +2288,7 @@ Name: count, dtype: int64
 <section id="recodificación-de-condact" class="level2">
 <h2 class="anchored" data-anchor-id="recodificación-de-condact">Recodificación de <code>condact</code></h2>
 <p>La variable <code>condact</code> llega como texto etiquetado desde el <code>.sav</code>. Se mapea a la escala numérica oficial del INEC antes de cualquier otra transformación, ya que varias variables dependen de ella.</p>
-<div id="30357e88" class="cell" data-execution_count="5">
+<div id="855df431" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mapeo de etiquetas de texto a códigos numéricos oficiales INEC</span></span>
@@ -2349,7 +2339,7 @@ Name: count, dtype: int64</code></pre>
 <section id="construcción-de-horas-trabajadas-totales" class="level2">
 <h2 class="anchored" data-anchor-id="construcción-de-horas-trabajadas-totales">Construcción de Horas Trabajadas Totales</h2>
 <p>El archivo fuente no incluye una variable de horas totales precalculada. Se construye sumando las horas del empleo principal (<code>p51a</code>) y del empleo secundario (<code>p51b</code>), que son las únicas columnas con valores numéricos de horas en el cuestionario.</p>
-<div id="3267a35a" class="cell" data-execution_count="6">
+<div id="9cc04183" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convertir a numérico (vienen como Categorical desde el .sav)</span></span>
@@ -2390,7 +2380,7 @@ Name: horas_trabajo_totales, dtype: float64</code></pre>
 <p>La ENEMDU tiene diseño de cuestionario condicional: preguntas sobre búsqueda de empleo solo se hacen a desempleados, preguntas laborales solo a ocupados, etc. Los NaN en esas variables son <strong>ausencias estructurales por diseño</strong>, no errores de medición.</p>
 <section id="variables-categóricas-nan-no-hay-dato" class="level3">
 <h3 class="anchored" data-anchor-id="variables-categóricas-nan-no-hay-dato">Variables categóricas: NaN → <code>"No hay dato"</code></h3>
-<div id="0eece8d2" class="cell" data-execution_count="7">
+<div id="05773755" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># p06 = estado_civil | p07 = asiste_a_clases</span></span>
@@ -2410,7 +2400,7 @@ Name: horas_trabajo_totales, dtype: float64</code></pre>
 <h2 class="anchored" data-anchor-id="mapeo-de-variables-geográficas-y-sociodemográficas">Mapeo de Variables Geográficas y Sociodemográficas</h2>
 <section id="mapeo-de-ciudades" class="level3">
 <h3 class="anchored" data-anchor-id="mapeo-de-ciudades">Mapeo de ciudades</h3>
-<div id="458ce40b" class="cell" data-execution_count="8">
+<div id="37ef3f3c" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># El catálogo traduce los códigos numéricos del .sav a nombres legibles</span></span>
@@ -2461,7 +2451,7 @@ Name: horas_trabajo_totales, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="303bc134" class="cell" data-execution_count="9">
+<div id="52392c02" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ciudad viene como float64 (ej. 10150.0) y el catálogo tiene int64 (10150).</span></span>
@@ -2496,7 +2486,7 @@ Name: count, dtype: int64</code></pre>
 </section>
 <section id="construcción-de-adec-empleo-adecuado" class="level3">
 <h3 class="anchored" data-anchor-id="construcción-de-adec-empleo-adecuado">Construcción de <code>adec</code> (empleo adecuado)</h3>
-<div id="0ad89efc" class="cell" data-execution_count="10">
+<div id="f9a36b42" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># adec no viene precalculada en el archivo; se deriva de condact</span></span>
@@ -2510,7 +2500,7 @@ Name: count, dtype: int64</code></pre>
 </section>
 <section id="mapeo-de-etnia" class="level3">
 <h3 class="anchored" data-anchor-id="mapeo-de-etnia">Mapeo de etnia</h3>
-<div id="3d97fc23" class="cell" data-execution_count="11">
+<div id="a6f9bb4c" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># La etnia está en p15 (autoidentificación étnica)</span></span>
@@ -2535,7 +2525,7 @@ Name: count, dtype: int64</code></pre>
 <section id="selección-final-de-variables" class="level2">
 <h2 class="anchored" data-anchor-id="selección-final-de-variables">Selección Final de Variables</h2>
 <p>Se selecciona el subconjunto relevante para el análisis visual y se renombran con etiquetas descriptivas en español. <strong>Este paso ocurre al final</strong>, después de que todas las columnas necesarias han sido creadas.</p>
-<div id="45a0616f" class="cell" data-execution_count="12">
+<div id="3263f146" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df[[</span>
@@ -2570,7 +2560,7 @@ Name: count, dtype: int64</code></pre>
 </blockquote>
 <section id="verificación-del-dataset-final" class="level3">
 <h3 class="anchored" data-anchor-id="verificación-del-dataset-final">Verificación del dataset final</h3>
-<div id="14257fef" class="cell" data-execution_count="13">
+<div id="0ef57480" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df_final.info()</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2607,7 +2597,7 @@ dtypes: float64(8), int64(2), str(12)
 memory usage: 4.6 MB</code></pre>
 </div>
 </div>
-<div id="70e4bc97" class="cell" data-execution_count="14">
+<div id="94d044f8" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total filas:    </span><span class="sc">{</span><span class="bu">len</span>(df_final)<span class="sc">:,}</span><span class="ss">"</span>)</span>
@@ -2640,7 +2630,7 @@ Name: count, dtype: int64</code></pre>
 </section>
 <section id="exportación-del-dataset-limpio" class="level2">
 <h2 class="anchored" data-anchor-id="exportación-del-dataset-limpio">Exportación del Dataset Limpio</h2>
-<div id="950eeae1" class="cell" data-execution_count="15">
+<div id="77a60412" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>cols_numericas <span class="op">=</span> [</span>
