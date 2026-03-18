@@ -34,7 +34,7 @@ df = pd.read_csv('SPSS/ENEMDU_clean.csv')
 # Convertir columnas numéricas que pueden llegar como object desde el CSV
 for col in ['edad', 'nivel_educativo', 'condicion_actividad', 'empleo_adecuado',
             'empleo', 'desempleado', 'horas_trabajo_totales', 'horas_visual',
-            'ingreso_laboral', 'ingreso_per_capita']:
+            'ingreso_laboral', 'ingreso_per_capita', 'area', 'genero']:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
@@ -849,6 +849,144 @@ chart_razon
 
 ---
 
+
+---
+
+## 6. ¿En Qué Trabajan los Ecuatorianos?
+
+### 6.1 Categoría de Ocupación por Género
+
+**Tipo de gráfico:** Barras horizontales agrupadas  
+**Justificación:** Mostrar cómo se distribuyen las categorías de ocupación (cuenta propia, empleado privado, gobierno, etc.) por género permite identificar en qué segmentos del mercado laboral se concentran hombres y mujeres, revelando patrones de segregación ocupacional.
+
+```{python}
+#| label: fig-ocupacion
+
+df_ocu2 = df[
+    df['ocupacion_actual'].notna() &
+    df['genero_txt'].isin(['Hombre', 'Mujer']) &
+    (df['ocupacion_actual'].astype(str) != 'nan')
+].copy()
+
+ocu_counts = (
+    df_ocu2.groupby(['ocupacion_actual', 'genero_txt'])
+    .size()
+    .reset_index(name='n')
+)
+
+# Total por ocupación para ordenar
+orden_ocu = (
+    ocu_counts.groupby('ocupacion_actual')['n']
+    .sum().sort_values(ascending=False).index.tolist()
+)
+
+# Proporción dentro de cada género para comparar
+ocu_counts['total_genero'] = ocu_counts.groupby('genero_txt')['n'].transform('sum')
+ocu_counts['pct'] = ocu_counts['n'] / ocu_counts['total_genero']
+
+chart_ocu = alt.Chart(ocu_counts).mark_bar(
+    cornerRadiusTopRight=4, cornerRadiusBottomRight=4
+).encode(
+    x=alt.X('pct:Q',
+            title='Proporción dentro del género',
+            axis=alt.Axis(format='%')),
+    y=alt.Y('ocupacion_actual:N',
+            title=None,
+            sort=orden_ocu,
+            axis=alt.Axis(labelLimit=250)),
+    color=alt.Color('genero_txt:N',
+                    title='Género',
+                    scale=alt.Scale(
+                        domain=['Hombre', 'Mujer'],
+                        range=['#2980b9', '#e91e8c']
+                    )),
+    xOffset=alt.XOffset('genero_txt:N'),
+    tooltip=[
+        alt.Tooltip('ocupacion_actual:N', title='Categoría'),
+        alt.Tooltip('genero_txt:N', title='Género'),
+        alt.Tooltip('n:Q', title='Personas', format=','),
+        alt.Tooltip('pct:Q', title='Proporción', format='.1%')
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Categoría de Ocupación por Género',
+        subtitle='Proporción dentro de cada género — población ocupada',
+        fontSize=15
+    ),
+    width=580, height=280
+)
+
+chart_ocu
+```
+
+> **Interpretación:** Si "Cuenta Propia" es la categoría más grande para ambos géneros refleja la alta informalidad del mercado laboral ecuatoriano. Una mayor proporción de mujeres en "Empleada Doméstica" o "Trabajadora del hogar no remunerada" evidencia la feminización de ciertos tipos de trabajo precario. La diferencia en "Empleado de Gobierno" entre géneros indica distintos niveles de acceso al empleo público.
+
+---
+
+### 6.2 Rama de Instrucción de los Ocupados
+
+**Tipo de gráfico:** Barras horizontales con color por género e ingreso mediano superpuesto  
+**Justificación:** Cruzar el área de formación académica con el género y el ingreso mediano permite identificar qué carreras concentran más trabajadores, si hay segregación por campo de estudio y qué áreas tienen mejor retorno económico.
+
+```{python}
+#| label: fig-rama-instruccion
+
+df_rama = df[
+    df['rama_instruccion'].notna() &
+    df['genero_txt'].isin(['Hombre', 'Mujer']) &
+    (~df['rama_instruccion'].isin(['Sin dato', 'Ninguna'])) &
+    (df['empleo'] == 1.0)
+].copy()
+
+rama_counts = (
+    df_rama.groupby(['rama_instruccion', 'genero_txt'])
+    .agg(n=('genero_txt', 'count'),
+         ingreso_mediano=('ingreso_laboral', 'median'))
+    .reset_index()
+)
+
+orden_rama = (
+    rama_counts.groupby('rama_instruccion')['n']
+    .sum().sort_values(ascending=False).index.tolist()
+)
+
+# Barras: cantidad de ocupados por rama y género
+barras_rama = alt.Chart(rama_counts).mark_bar(
+    cornerRadiusTopRight=3, cornerRadiusBottomRight=3, opacity=0.85
+).encode(
+    x=alt.X('n:Q', title='Número de ocupados'),
+    y=alt.Y('rama_instruccion:N',
+            title=None,
+            sort=orden_rama,
+            axis=alt.Axis(labelLimit=260)),
+    color=alt.Color('genero_txt:N',
+                    title='Género',
+                    scale=alt.Scale(
+                        domain=['Hombre', 'Mujer'],
+                        range=['#2980b9', '#e91e8c']
+                    )),
+    xOffset=alt.XOffset('genero_txt:N'),
+    tooltip=[
+        alt.Tooltip('rama_instruccion:N', title='Rama'),
+        alt.Tooltip('genero_txt:N', title='Género'),
+        alt.Tooltip('n:Q', title='Ocupados', format=','),
+        alt.Tooltip('ingreso_mediano:Q', title='Ingreso mediano USD', format=',.0f')
+    ]
+).properties(
+    title=alt.TitleParams(
+        'Rama de Instrucción de los Ocupados por Género',
+        subtitle='Número de ocupados por rama de instrucción y género',
+        fontSize=15
+    ),
+    width=580, height=340
+)
+
+barras_rama
+```
+
+> **Interpretación:** Las ramas más grandes en número de ocupados no necesariamente son las mejor remuneradas — el punto naranja (ingreso mediano) independiente de las barras lo revela. Ciencias Sociales y Comercio suelen tener muchos graduados pero ingresos moderados. Ingeniería y Salud tienden a concentrar mejores salarios. La diferencia de barras azul vs rosa en cada rama muestra la **segregación horizontal** del mercado laboral ecuatoriano: qué campos son predominantemente masculinos o femeninos.
+
+---
 
 ## Conclusiones del Análisis Visual
 

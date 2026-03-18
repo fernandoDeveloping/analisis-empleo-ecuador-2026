@@ -407,7 +407,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="carga-del-dataset">Carga del Dataset</h2>
 <section id="librerías-necesarias" class="level3">
 <h3 class="anchored" data-anchor-id="librerías-necesarias">Librerías necesarias</h3>
-<div id="7d6ad447" class="cell" data-execution_count="1">
+<div id="d84dcec7" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -420,7 +420,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="lectura-del-archivo-spss" class="level3">
 <h3 class="anchored" data-anchor-id="lectura-del-archivo-spss">Lectura del archivo SPSS</h3>
-<div id="59e6e759" class="cell" data-execution_count="2">
+<div id="3b654534" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>file_path <span class="op">=</span> <span class="st">'SPSS/enemdu_persona_2026_01.sav'</span></span>
@@ -498,7 +498,7 @@ Nivel educativo: {6.0: 5231, 5.0: 5175, 4.0: 5098, 9.0: 4541, 7.0: 3737, 8.0: 80
 <p>Esta sección se ejecuta <strong>sobre los datos crudos</strong>, antes de cualquier modificación.</p>
 <section id="vista-previa-de-condact" class="level3">
 <h3 class="anchored" data-anchor-id="vista-previa-de-condact">Vista previa de <code>condact</code></h3>
-<div id="1535bd9d" class="cell" data-execution_count="3">
+<div id="33784281" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># condact llega como categoría de texto desde el .sav</span></span>
@@ -516,7 +516,7 @@ Name: condact, dtype: str</code></pre>
 </section>
 <section id="distribución-de-frecuencias-por-columna" class="level3">
 <h3 class="anchored" data-anchor-id="distribución-de-frecuencias-por-columna">Distribución de frecuencias por columna</h3>
-<div id="02d899d5" class="cell" data-execution_count="4">
+<div id="94dc961a" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Revisión sistemática: detecta tipos, NaN estructurales e inconsistencias</span></span>
@@ -2291,7 +2291,7 @@ Name: count, dtype: int64
 <section id="recodificación-de-condact" class="level2">
 <h2 class="anchored" data-anchor-id="recodificación-de-condact">Recodificación de <code>condact</code></h2>
 <p>La variable <code>condact</code> llega como texto etiquetado desde el <code>.sav</code>. Se mapea a la escala numérica oficial del INEC antes de cualquier otra transformación, ya que varias variables dependen de ella.</p>
-<div id="855df431" class="cell" data-execution_count="5">
+<div id="4301be42" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mapeo de etiquetas de texto a códigos numéricos oficiales INEC</span></span>
@@ -2342,7 +2342,7 @@ Name: count, dtype: int64</code></pre>
 <section id="construcción-de-horas-trabajadas-totales" class="level2">
 <h2 class="anchored" data-anchor-id="construcción-de-horas-trabajadas-totales">Construcción de Horas Trabajadas Totales</h2>
 <p>El archivo fuente no incluye una variable de horas totales precalculada. Se construye sumando las horas del empleo principal (<code>p51a</code>) y del empleo secundario (<code>p51b</code>), que son las únicas columnas con valores numéricos de horas en el cuestionario.</p>
-<div id="9cc04183" class="cell" data-execution_count="6">
+<div id="f3746b9b" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convertir a numérico (vienen como Categorical desde el .sav)</span></span>
@@ -2383,7 +2383,7 @@ Name: horas_trabajo_totales, dtype: float64</code></pre>
 <p>La ENEMDU tiene diseño de cuestionario condicional: preguntas sobre búsqueda de empleo solo se hacen a desempleados, preguntas laborales solo a ocupados, etc. Los NaN en esas variables son <strong>ausencias estructurales por diseño</strong>, no errores de medición.</p>
 <section id="variables-categóricas-nan-no-hay-dato" class="level3">
 <h3 class="anchored" data-anchor-id="variables-categóricas-nan-no-hay-dato">Variables categóricas: NaN → <code>"No hay dato"</code></h3>
-<div id="05773755" class="cell" data-execution_count="7">
+<div id="617024b4" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># p06 = estado_civil | p07 = asiste_a_clases</span></span>
@@ -2403,7 +2403,7 @@ Name: horas_trabajo_totales, dtype: float64</code></pre>
 <h2 class="anchored" data-anchor-id="mapeo-de-variables-geográficas-y-sociodemográficas">Mapeo de Variables Geográficas y Sociodemográficas</h2>
 <section id="mapeo-de-ciudades" class="level3">
 <h3 class="anchored" data-anchor-id="mapeo-de-ciudades">Mapeo de ciudades</h3>
-<div id="37ef3f3c" class="cell" data-execution_count="8">
+<div id="8131b35b" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># El catálogo traduce los códigos numéricos del .sav a nombres legibles</span></span>
@@ -2454,7 +2454,7 @@ Name: horas_trabajo_totales, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="52392c02" class="cell" data-execution_count="9">
+<div id="0782cf27" class="cell" data-execution_count="9">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ciudad viene como float64 (ej. 10150.0) y el catálogo tiene int64 (10150).</span></span>
@@ -2489,7 +2489,7 @@ Name: count, dtype: int64</code></pre>
 </section>
 <section id="construcción-de-adec-empleo-adecuado" class="level3">
 <h3 class="anchored" data-anchor-id="construcción-de-adec-empleo-adecuado">Construcción de <code>adec</code> (empleo adecuado)</h3>
-<div id="f9a36b42" class="cell" data-execution_count="10">
+<div id="c1aab200" class="cell" data-execution_count="10">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># adec no viene precalculada en el archivo; se deriva de condact</span></span>
@@ -2503,7 +2503,7 @@ Name: count, dtype: int64</code></pre>
 </section>
 <section id="mapeo-de-etnia" class="level3">
 <h3 class="anchored" data-anchor-id="mapeo-de-etnia">Mapeo de etnia</h3>
-<div id="a6f9bb4c" class="cell" data-execution_count="11">
+<div id="65a97a70" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># La etnia está en p15 (autoidentificación étnica)</span></span>
@@ -2528,34 +2528,51 @@ Name: count, dtype: int64</code></pre>
 <section id="selección-final-de-variables" class="level2">
 <h2 class="anchored" data-anchor-id="selección-final-de-variables">Selección Final de Variables</h2>
 <p>Se selecciona el subconjunto relevante para el análisis visual y se renombran con etiquetas descriptivas en español. <strong>Este paso ocurre al final</strong>, después de que todas las columnas necesarias han sido creadas.</p>
-<div id="3263f146" class="cell" data-execution_count="12">
+<div id="ba68b604" class="cell" data-execution_count="12">
 <details class="code-fold">
 <summary>Mostrar código</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df[[</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'horas_trabajo_totales'</span>, <span class="st">'horas_visual'</span>,</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'area'</span>, <span class="st">'ciudad'</span>, <span class="st">'etnia_nombre'</span>,</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'condact'</span>, <span class="st">'empleo'</span>, <span class="st">'desempleo'</span>, <span class="st">'adec'</span>,</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p01'</span>, <span class="st">'p02'</span>, <span class="st">'p03'</span>, <span class="st">'p05b'</span>, <span class="st">'p06'</span>, <span class="st">'p07'</span>,</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p10a'</span>, <span class="st">'p32'</span>, <span class="st">'p38'</span>, <span class="st">'p42'</span>, <span class="st">'p45'</span>,</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ingrl'</span>, <span class="st">'ingpc'</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>]].rename(columns<span class="op">=</span>{</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p01'</span>:          <span class="st">'personas_hogar'</span>,</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p02'</span>:          <span class="st">'genero'</span>,</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p03'</span>:          <span class="st">'edad'</span>,</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p05b'</span>:         <span class="st">'seguro'</span>,</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p06'</span>:          <span class="st">'estado_civil'</span>,</span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p07'</span>:          <span class="st">'asiste_a_clases'</span>,</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'condact'</span>:      <span class="st">'condicion_actividad'</span>,</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'adec'</span>:         <span class="st">'empleo_adecuado'</span>,</span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p10a'</span>:         <span class="st">'nivel_educativo'</span>,</span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p45'</span>:          <span class="st">'tiempo_experiencia'</span>,</span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p32'</span>:          <span class="st">'como_busca_empleo'</span>,</span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p38'</span>:          <span class="st">'razon_dejo_trabajo'</span>,</span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p42'</span>:          <span class="st">'ocupacion_actual'</span>,</span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">'etnia_nombre'</span>: <span class="st">'etnia'</span>,</span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ingrl'</span>:        <span class="st">'ingreso_laboral'</span>,</span>
-<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ingpc'</span>:        <span class="st">'ingreso_per_capita'</span></span>
-<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mapear p10b (rama de instrucción) a texto antes de seleccionar</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>mapa_p10b <span class="op">=</span> {</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="fl">0.0</span>: <span class="st">'Ninguna'</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="fl">1.0</span>: <span class="st">'Educación'</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="fl">2.0</span>: <span class="st">'Humanidades y Artes'</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="fl">3.0</span>: <span class="st">'Cs. Sociales, Comercio y Derecho'</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    <span class="fl">4.0</span>: <span class="st">'Ciencias'</span>,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    <span class="fl">5.0</span>: <span class="st">'Ingeniería, Industria y Construcción'</span>,</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="fl">6.0</span>: <span class="st">'Agricultura y Veterinaria'</span>,</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="fl">7.0</span>: <span class="st">'Salud y Bienestar'</span>,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="fl">8.0</span>: <span class="st">'Servicios'</span>,</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    <span class="fl">9.0</span>: <span class="st">'Sin especificar'</span>,</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="fl">10.0</span>: <span class="st">'Tecnología'</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>df[<span class="st">'p10b'</span>] <span class="op">=</span> pd.to_numeric(df[<span class="st">'p10b'</span>], errors<span class="op">=</span><span class="st">'coerce'</span>).<span class="bu">map</span>(mapa_p10b).fillna(<span class="st">'Sin dato'</span>)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>df_final <span class="op">=</span> df[[</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">'horas_trabajo_totales'</span>, <span class="st">'horas_visual'</span>,</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">'area'</span>, <span class="st">'ciudad'</span>, <span class="st">'etnia_nombre'</span>,</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">'condact'</span>, <span class="st">'empleo'</span>, <span class="st">'desempleo'</span>, <span class="st">'adec'</span>,</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p01'</span>, <span class="st">'p02'</span>, <span class="st">'p03'</span>, <span class="st">'p05b'</span>, <span class="st">'p06'</span>, <span class="st">'p07'</span>,</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p10a'</span>, <span class="st">'p10b'</span>, <span class="st">'p32'</span>, <span class="st">'p38'</span>, <span class="st">'p42'</span>, <span class="st">'p45'</span>,</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ingrl'</span>, <span class="st">'ingpc'</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>]].rename(columns<span class="op">=</span>{</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p01'</span>:          <span class="st">'personas_hogar'</span>,</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p02'</span>:          <span class="st">'genero'</span>,</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p03'</span>:          <span class="st">'edad'</span>,</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p05b'</span>:         <span class="st">'seguro'</span>,</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p06'</span>:          <span class="st">'estado_civil'</span>,</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p07'</span>:          <span class="st">'asiste_a_clases'</span>,</span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">'condact'</span>:      <span class="st">'condicion_actividad'</span>,</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">'adec'</span>:         <span class="st">'empleo_adecuado'</span>,</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p10a'</span>:         <span class="st">'nivel_educativo'</span>,</span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p10b'</span>:         <span class="st">'rama_instruccion'</span>,</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p45'</span>:          <span class="st">'tiempo_experiencia'</span>,</span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p32'</span>:          <span class="st">'como_busca_empleo'</span>,</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p38'</span>:          <span class="st">'razon_dejo_trabajo'</span>,</span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">'p42'</span>:          <span class="st">'ocupacion_actual'</span>,</span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">'etnia_nombre'</span>: <span class="st">'etnia'</span>,</span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ingrl'</span>:        <span class="st">'ingreso_laboral'</span>,</span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ingpc'</span>:        <span class="st">'ingreso_per_capita'</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <blockquote class="blockquote">
@@ -2563,7 +2580,7 @@ Name: count, dtype: int64</code></pre>
 </blockquote>
 <section id="verificación-del-dataset-final" class="level3">
 <h3 class="anchored" data-anchor-id="verificación-del-dataset-final">Verificación del dataset final</h3>
-<div id="0ef57480" class="cell" data-execution_count="13">
+<div id="ea272364" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df_final.info()</span></code></pre></div><button title="Copiar al portapapeles" class="code-copy-button"><i class="bi"></i></button></div>
@@ -2571,7 +2588,7 @@ Name: count, dtype: int64</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>&lt;class 'pandas.DataFrame'&gt;
 RangeIndex: 27528 entries, 0 to 27527
-Data columns (total 22 columns):
+Data columns (total 23 columns):
  #   Column                 Non-Null Count  Dtype  
 ---  ------                 --------------  -----  
  0   horas_trabajo_totales  13297 non-null  float64
@@ -2590,17 +2607,18 @@ Data columns (total 22 columns):
  13  estado_civil           23507 non-null  str    
  14  asiste_a_clases        26174 non-null  str    
  15  nivel_educativo        26174 non-null  float64
- 16  como_busca_empleo      12877 non-null  str    
- 17  razon_dejo_trabajo     414 non-null    str    
- 18  ocupacion_actual       13711 non-null  str    
- 19  tiempo_experiencia     13297 non-null  str    
- 20  ingreso_laboral        11989 non-null  str    
- 21  ingreso_per_capita     27300 non-null  float64
-dtypes: float64(8), int64(2), str(12)
-memory usage: 4.6 MB</code></pre>
+ 16  rama_instruccion       27528 non-null  str    
+ 17  como_busca_empleo      12877 non-null  str    
+ 18  razon_dejo_trabajo     414 non-null    str    
+ 19  ocupacion_actual       13711 non-null  str    
+ 20  tiempo_experiencia     13297 non-null  str    
+ 21  ingreso_laboral        11989 non-null  str    
+ 22  ingreso_per_capita     27300 non-null  float64
+dtypes: float64(8), int64(2), str(13)
+memory usage: 4.8 MB</code></pre>
 </div>
 </div>
-<div id="94d044f8" class="cell" data-execution_count="14">
+<div id="b28b3ade" class="cell" data-execution_count="14">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Total filas:    </span><span class="sc">{</span><span class="bu">len</span>(df_final)<span class="sc">:,}</span><span class="ss">"</span>)</span>
@@ -2610,7 +2628,7 @@ memory usage: 4.6 MB</code></pre>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Total filas:    27,528
-Total columnas: 22
+Total columnas: 23
 Ciudades representadas: 331</code></pre>
 </div>
 <div class="cell-output cell-output-display" data-execution_count="14">
@@ -2633,7 +2651,7 @@ Name: count, dtype: int64</code></pre>
 </section>
 <section id="exportación-del-dataset-limpio" class="level2">
 <h2 class="anchored" data-anchor-id="exportación-del-dataset-limpio">Exportación del Dataset Limpio</h2>
-<div id="77a60412" class="cell" data-execution_count="15">
+<div id="92f8df62" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Mostrar código</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>cols_numericas <span class="op">=</span> [</span>

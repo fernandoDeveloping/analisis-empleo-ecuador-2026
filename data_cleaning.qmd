@@ -256,12 +256,28 @@ df['etnia_nombre'] = pd.to_numeric(df['p15'], errors='coerce') \
 Se selecciona el subconjunto relevante para el análisis visual y se renombran con etiquetas descriptivas en español. **Este paso ocurre al final**, después de que todas las columnas necesarias han sido creadas.
 
 ```{python}
+# Mapear p10b (rama de instrucción) a texto antes de seleccionar
+mapa_p10b = {
+    0.0: 'Ninguna',
+    1.0: 'Educación',
+    2.0: 'Humanidades y Artes',
+    3.0: 'Cs. Sociales, Comercio y Derecho',
+    4.0: 'Ciencias',
+    5.0: 'Ingeniería, Industria y Construcción',
+    6.0: 'Agricultura y Veterinaria',
+    7.0: 'Salud y Bienestar',
+    8.0: 'Servicios',
+    9.0: 'Sin especificar',
+    10.0: 'Tecnología'
+}
+df['p10b'] = pd.to_numeric(df['p10b'], errors='coerce').map(mapa_p10b).fillna('Sin dato')
+
 df_final = df[[
     'horas_trabajo_totales', 'horas_visual',
     'area', 'ciudad', 'etnia_nombre',
     'condact', 'empleo', 'desempleo', 'adec',
     'p01', 'p02', 'p03', 'p05b', 'p06', 'p07',
-    'p10a', 'p32', 'p38', 'p42', 'p45',
+    'p10a', 'p10b', 'p32', 'p38', 'p42', 'p45',
     'ingrl', 'ingpc'
 ]].rename(columns={
     'p01':          'personas_hogar',
@@ -273,6 +289,7 @@ df_final = df[[
     'condact':      'condicion_actividad',
     'adec':         'empleo_adecuado',
     'p10a':         'nivel_educativo',
+    'p10b':         'rama_instruccion',
     'p45':          'tiempo_experiencia',
     'p32':          'como_busca_empleo',
     'p38':          'razon_dejo_trabajo',
